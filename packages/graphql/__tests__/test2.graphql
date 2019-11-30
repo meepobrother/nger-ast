@@ -1,0 +1,37 @@
+"""demo"""
+interface DemoInterface {
+  """title3"""
+  title3: string
+}
+
+"""title3"""
+type Demo implements DemoInterface {
+  """title3"""
+  title: string!
+}
+
+"""title3"""
+input Demo2 {
+  """title3"""
+  title: string
+}
+
+"""title3"""
+input DemoInput {
+  """title3"""
+  title2: string
+}
+
+"""title3"""
+type Query {
+  """title3"""
+  get(
+    """title3"""
+    input: DemoInput
+  ): Demo
+  """title3"""
+  post(
+    """title3"""
+    input: Demo2
+  ): Demo
+}
