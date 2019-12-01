@@ -1,5 +1,4 @@
-import { } from '../lib/ast';
-import { moduleRef } from '../lib/module';
+import { moduleRef } from '../lib';
 import * as ts from 'typescript';
 import { createProgram } from 'typescript';
 import { join } from 'path';
@@ -12,6 +11,7 @@ const program = createProgram({
         declaration: true
     }
 });
-const sourceFiles = program.getSourceFiles()
+const typeChecker = program.getTypeChecker();
+const sourceFiles = program.getSourceFiles();
 const files = sourceFiles.map(it => moduleRef.create(it, 'kind'))
 debugger;

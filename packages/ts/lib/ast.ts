@@ -913,8 +913,6 @@ export class ImportSpecifier {
     @PlainPro()
     kind: ts.SyntaxKind.ImportSpecifier;
     @PlainPro({ isClass: true })
-    parent: NamedImports;
-    @PlainPro({ isClass: true })
     propertyName?: Identifier;
     @PlainPro({ isClass: true })
     name: Identifier;
