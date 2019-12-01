@@ -1,6 +1,6 @@
 {
-    "name": "@nger/ast.graphql",
-    "version": "1.0.0",
+    "name": "@nger/ast.ts",
+    "version": "0.0.0",
     "description": "> TODO: description",
     "author": "imeepos <1037483576@qq.com>",
     "homepage": "https://github.com/meepobrother/nger-ast#readme",
@@ -15,8 +15,7 @@
         "lib"
     ],
     "publishConfig": {
-        "registry": "http://registry.npmjs.org",
-        "access": "public"
+        "registry": "http://registry.npmjs.org"
     },
     "repository": {
         "type": "git",
@@ -27,9 +26,5 @@
     },
     "bugs": {
         "url": "https://github.com/meepobrother/nger-ast/issues"
-    },
-    "dependencies": {
-        "@nger/decorator": "^1.0.1",
-        "@nger/plain": "^1.0.19"
     }
 }
