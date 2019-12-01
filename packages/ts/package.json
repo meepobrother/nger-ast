@@ -28,6 +28,6 @@
         "url": "https://github.com/meepobrother/nger-ast/issues"
     },
     "dependencies": {
-        "@nger/plain": "^1.0.19"
+        "@nger/plain": "^1.0.22"
     }
 }
