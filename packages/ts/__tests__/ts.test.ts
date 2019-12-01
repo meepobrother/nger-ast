@@ -1,26 +1,8 @@
-import { moduleRef } from '../lib';
-import * as ts from 'typescript';
-import { createProgram } from 'typescript';
+import { Project } from '../lib';
 import { join } from 'path';
-const defaultCompilerOptions = ts.getDefaultCompilerOptions();
-const tsconfig = ts.readJsonConfigFile(join(__dirname, 'tsconfig.json'), (path: string) => {
-    return path;
-})
-const program = createProgram({
-    rootNames: [
-        join(__dirname)
-    ],
-    options: {
-        ...defaultCompilerOptions,
-        target: ts.ScriptTarget.ESNext,
-        declaration: true
-    }
-});
-const typeChecker = program.getTypeChecker();
-const fileNames = program.getSourceFiles().map(it => it.fileName)
-const sourceFile = program.getSourceFileByPath(join(__dirname, 'src', './demo.ts') as ts.Path);
-if (sourceFile) {
-    const files = moduleRef.create(sourceFile, 'kind')
-    debugger;
-}
+const project = new Project([
+    join(__dirname, 'src', './demo.ts')
+]);
+const node = project.getSourceFile(join(__dirname, 'src', './demo.ts'))
+
 debugger;

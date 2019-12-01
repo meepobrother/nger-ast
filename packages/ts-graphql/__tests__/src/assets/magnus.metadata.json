@@ -1,0 +1,12 @@
+{
+  "query": [
+    [
+      "getDemo",
+      "DemoGraphql",
+      "",
+      "getDemo",
+      [],
+      null
+    ]
+  ]
+}
