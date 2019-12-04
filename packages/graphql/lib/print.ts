@@ -8,7 +8,12 @@ export function print(ast: ast.ASTNode): string {
 }
 export class PrintVisitor implements ast.Visitor {
     visit(node?: ast.Node, context?: any): string {
-        return node ? node.visit(this, context) : ``
+        if (node) {
+            if (typeof node.visit === 'function') {
+                return node.visit(this, context);
+            }
+        }
+        return ``
     }
     visits(nodes?: ast.Node[], context?: any) {
         return nodes ? nodes.map(node => this.visit(node, context)) : undefined;
@@ -176,7 +181,7 @@ export class PrintVisitor implements ast.Visitor {
     }
     visitEnumValueDefinitionNode(node: ast.EnumValueDefinitionNode) {
         const { description, name, directives } = node.toJson(this);
-        this.addDescription(description, this.join([name, this.join(directives, ' ')], ' '))
+        return this.addDescription(description, this.join([name, this.join(directives, ' ')], ' '))
     }
     visitInputObjectTypeDefinitionNode(node: ast.InputObjectTypeDefinitionNode) {
         const { description, name, directives, fields } = node.toJson(this);

@@ -13,15 +13,21 @@ export class Project {
             options: {
                 target: ts.ScriptTarget.ESNext,
                 declaration: true,
+                removeComments: false,
+                noEmit: false,
+                module: ts.ModuleKind.CommonJS,
                 ...compilerOptions || {}
             }
         });
         this.typeChecker = this.program.getTypeChecker();
     }
     getSourceFile(file: string): SourceFile | undefined {
-        const main = this.program.getSourceFiles().find(it => it.fileName === file)
+        const files = this.program.getSourceFiles();
+        const main = files.find(it => it.fileName === file)
         if (main) {
-            return moduleRef.create<SourceFile>(main, 'kind');
+            return moduleRef.create<SourceFile>(main, 'kind', (source, instance) => {
+                Reflect.set(instance, '__node', source)
+            });
         }
     }
 }

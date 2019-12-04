@@ -1,5 +1,5 @@
 {
-    "name": "@nger/ast.ts",
+    "name": "@nger/ast_ts",
     "version": "1.0.0",
     "description": "> TODO: description",
     "author": "imeepos <1037483576@qq.com>",
@@ -28,6 +28,6 @@
         "url": "https://github.com/meepobrother/nger-ast/issues"
     },
     "dependencies": {
-        "@nger/plain": "^1.0.22"
+        "@nger/plain": "^1.0.27"
     }
 }

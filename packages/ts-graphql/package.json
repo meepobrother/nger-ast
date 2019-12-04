@@ -28,6 +28,7 @@
     "url": "https://github.com/meepobrother/nger-ast/issues"
   },
   "dependencies": {
-    "@nger/plain": "^1.0.22"
+    "@nestjs/common": "^6.10.5",
+    "@nger/plain": "^1.0.25"
   }
 }

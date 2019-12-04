@@ -181,7 +181,7 @@
             "kind": "NamedType",
             "name": {
               "kind": "Name",
-              "value": "Empty"
+              "value": "String"
             }
           },
           "directives": []

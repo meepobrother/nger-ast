@@ -1,6 +1,7 @@
 import * as ast from '@nger/ast_ts';
-import { CompilerContext } from './compiler'
-export class CompilerVisitor implements ast.Visitor {
+import { CompilerContext } from './compiler';
+import * as ts from 'typescript';
+export class ToStringVisitor implements ast.Visitor {
     visitNoneSymbol(node: ast.NoneSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
@@ -224,7 +225,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visit(node?: ast.Node, context?: CompilerContext): any {
-        return node && node.toJson(this, context);
+        return node && node.visit(this, context);
     }
     visits(nodes?: ast.Node[], context?: any): any {
         return nodes && nodes.map(node => node.visit(this, context))
@@ -296,11 +297,12 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitNamedImports(node: ast.NamedImports, context?: any) {
-        throw new Error("Method not implemented.");
+        const { elements } = node.toJson(this, context);
+        return `{ ${elements.join(', ')} }`
     }
     visitImportSpecifier(node: ast.ImportSpecifier, context?: any) {
-        const { kind, propertyName, name } = this.visit(node, context);
-        return name.escapedText;
+        const { kind, propertyName, name } = node.toJson(this, context);
+        return name;
     }
     visitNamespaceImport(node: ast.NamespaceImport, context?: any) {
         throw new Error("Method not implemented.");
@@ -324,18 +326,16 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitVariableDeclarationList(node: ast.VariableDeclarationList, context?: any) {
-        throw new Error("Method not implemented.");
+        const { declarations, flags } = node.toJson(this, context)
+        return declarations.join('\n');
     }
     visitVariableStatement(node: ast.VariableStatement, context?: any) {
-        const { declarationList } = this.visit(node, context);
-        return declarationList;
+        const { declarationList, flags, modifiers, decorators } = node.toJson(this, context);
+        return `${declarationList}`;
     }
     visitVariableDeclaration(node: ast.VariableDeclaration, context?: any) {
-        const { name, exclamationToken, type, initializer } = this.visit(node, context);
-        debugger;
-    }
-    visitModifier(node: ast.Modifier, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, exclamationToken, type, initializer, flags, modifiers } = node.toJson(this, context);
+        return `const ${name}${exclamationToken ? '!' : ''}${type ? `:${type}` : ''}${initializer ? ` = ${initializer}` : ''}`
     }
     visitDoStatement(node: ast.DoStatement, context?: any) {
         throw new Error("Method not implemented.");
@@ -359,7 +359,8 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitReturnStatement(node: ast.ReturnStatement, context?: any) {
-        throw new Error("Method not implemented.");
+        const { expression } = node.toJson(this, context);
+        return `return ${expression}`;
     }
     visitWithStatement(node: ast.WithStatement, context?: any) {
         throw new Error("Method not implemented.");
@@ -383,10 +384,12 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitImportClause(node: ast.ImportClause, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, namedBindings } = node.toJson(this, context);
+        return `${name ? name : namedBindings}`
     }
     visitImportDeclaration(node: ast.ImportDeclaration, context: CompilerContext) {
-        const { importClause, moduleSpecifier } = this.visit(node, context);
+        const { moduleSpecifier, importClause } = node.toJson(this, context);
+        return `import ${importClause} from '${moduleSpecifier}'`
     }
     visitModuleBlock(node: ast.ModuleBlock, context?: any) {
         throw new Error("Method not implemented.");
@@ -398,7 +401,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitStringLiteral(node: ast.StringLiteral, context?: any) {
-        const { kind, text, isUnterminated, hasExtendedUnicodeEscape } = this.visit(node, context);
+        const { kind, text, isUnterminated, hasExtendedUnicodeEscape } = node;
         return text;
     }
     visitJsxAttribute(node: ast.JsxAttribute, context?: any) {
@@ -453,6 +456,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitFunctionExpression(node: ast.FunctionExpression, context?: any) {
+        debugger;
         throw new Error("Method not implemented.");
     }
     visitTemplateTail(node: ast.TemplateTail, context?: any) {
@@ -465,13 +469,13 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitImportExpression(node: ast.ImportExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        return `import`;
     }
     visitNullLiteral(node: ast.NullLiteral, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitBooleanLiteral(node: ast.BooleanLiteral, context?: any) {
-        throw new Error("Method not implemented.");
+        return `boolean`
     }
     visitPartiallyEmittedExpression(node: ast.PartiallyEmittedExpression, context?: any) {
         throw new Error("Method not implemented.");
@@ -486,16 +490,19 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitDeleteExpression(node: ast.DeleteExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        const { expression } = node.toJson(this, context);
+        return `delete ${expression}`
     }
     visitTypeOfExpression(node: ast.TypeOfExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        const { expression } = node.toJson(this, context);
+        return `typeof ${expression}`
     }
     visitVoidExpression(node: ast.VoidExpression, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitAwaitExpression(node: ast.AwaitExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        const { expression } = node.toJson(this, context);
+        return `await ${expression}`
     }
     visitTypeAssertion(node: ast.TypeAssertion, context?: any) {
         throw new Error("Method not implemented.");
@@ -537,7 +544,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitNumericLiteral(node: ast.NumericLiteral, context?: any) {
-        return new Number(node.text);
+        return node.text;
     }
     visitSemicolonClassElement(node: ast.SemicolonClassElement, context?: any) {
         throw new Error("Method not implemented.");
@@ -579,7 +586,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitExportDeclaration(node: ast.ExportDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+        debugger;
     }
     visitExportSpecifier(node: ast.ExportSpecifier, context?: any) {
         throw new Error("Method not implemented.");
@@ -597,8 +604,38 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitFunctionDeclaration(node: ast.FunctionDeclaration, context?: any) {
-        const { name, body, asteriskToken, questionToken, exclamationToken, typeParameters, parameters, type } = this.visit(node, context);
-        debugger;
+        const { name, body, modifiers, flags, asteriskToken, questionToken, exclamationToken, typeParameters, parameters, type } = node.toJson(this, context);
+        return `${modifiers.join(' ')} function ${name}(${parameters.join(', ')})${body}`
+    }
+    visitModifier(node: ast.Modifier, context?: any) {
+        switch (node.kind) {
+            case ts.SyntaxKind.AbstractKeyword:
+                return 'abstract';
+            case ts.SyntaxKind.AsyncKeyword:
+                return 'async';
+            case ts.SyntaxKind.ConstKeyword:
+                return 'const';
+            case ts.SyntaxKind.DeclareKeyword:
+                return 'declare';
+            case ts.SyntaxKind.DeclareKeyword:
+                return 'declare';
+            case ts.SyntaxKind.DefaultKeyword:
+                return `default`;
+            case ts.SyntaxKind.ExportKeyword:
+                return `export`;
+            case ts.SyntaxKind.PublicKeyword:
+                return `public`;
+            case ts.SyntaxKind.PrivateKeyword:
+                return `private`;
+            case ts.SyntaxKind.ProtectedKeyword:
+                return `protected`;
+            case ts.SyntaxKind.ReadonlyKeyword:
+                return 'readonly';
+            case ts.SyntaxKind.StaticKeyword:
+                return `static`;
+            default:
+                throw new Error(`unknow type`)
+        }
     }
     visitJSDocFunctionType(node: ast.JSDocFunctionType, context?: any) {
         throw new Error("Method not implemented.");
@@ -631,7 +668,8 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitPropertyAccessEntityNameExpression(node: ast.PropertyAccessEntityNameExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, expression, questionDotToken } = node.toJson(this, context);
+        return `${expression}${questionDotToken ? '?' : ''}.${name}`
     }
     visitJSDocSignature(node: ast.JSDocSignature, context?: any) {
         throw new Error("Method not implemented.");
@@ -687,23 +725,20 @@ export class CompilerVisitor implements ast.Visitor {
     visitGetAccessorDeclaration(node: ast.GetAccessorDeclaration, context?: any) {
         throw new Error("Method not implemented.");
     }
-
     visitSourceFile(node: ast.SourceFile, context: CompilerContext) {
         const _context = new CompilerContext(context);
         _context.setSourceFile(node)
-        node.statements.map(it => this.visit(it, _context));
+        if (node) {
+            const { statements } = node.toJson(this, context);
+            return statements.join('\n');
+        }
+        return ``;
     }
     visitClassDeclaration(node: ast.ClassDeclaration, context: CompilerContext) {
-        node.members.map(member => this.visit(member, context))
+        debugger;
     }
     visitPropertyDeclaration(node: ast.PropertyDeclaration, context: CompilerContext): any {
-        const { type, name } = node;
-        if (type) {
-            if (type instanceof ast.TypeReferenceNode) {
-                const name = this.visit(type.typeName, context);
-                const typeArguments = this.visits(type.typeArguments, context)
-            }
-        }
+        debugger;
     }
     visitIdentifier(node: ast.Identifier, context: CompilerContext) {
         const { escapedText, originalKeywordKind, isInJSDocNamespace } = node;
@@ -722,13 +757,16 @@ export class CompilerVisitor implements ast.Visitor {
         debugger;
     }
     visitExpressionStatement(node: ast.ExpressionStatement, context: CompilerContext): any {
-        this.visit(node.expression, context);
+        const { expression } = node.toJson(this, context);
+        return `${expression}`;
     }
     visitCallExpression(node: ast.CallExpression, context: CompilerContext) {
-        this.visit(node.expression, context)
+        const { expression, questionDotToken, typeArguments, arguments: args } = node.toJson(this, context);
+        return `${expression}(${args.join(', ')})`
     }
     visitBlock(node: ast.Block, context: CompilerContext) {
-        node.statements.map(it => this.visit(it, context))
+        const { statements } = node.toJson(this, context);
+        return `{\n\t${statements.join(';\n\t')}\t\n}`
     }
     visitJSDocOptionalType(node: ast.JSDocOptionalType, context: CompilerContext) {
         debugger;
@@ -737,6 +775,3 @@ export class CompilerVisitor implements ast.Visitor {
         debugger;
     }
 }
-export * from './compiler';
-export * from './toString';
-export * from './ts-graphql';

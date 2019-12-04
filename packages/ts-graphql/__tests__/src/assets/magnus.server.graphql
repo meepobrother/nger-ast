@@ -39,5 +39,5 @@ scalar Date
 scalar ID
 
 type Query {
-  getDemo: Empty
+  getDemo: String
 }

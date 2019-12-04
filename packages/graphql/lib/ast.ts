@@ -134,6 +134,8 @@ export interface ASTKindToNode {
     InputObjectTypeExtension: InputObjectTypeExtensionNode;
 }
 export abstract class Node {
+    __node: any;
+    __type: any;
     description?: StringValueNode;
     abstract visit(visitor: Visitor, context?: any): any;
     abstract toJson(visitor: Visitor, context?: any): any;
@@ -148,6 +150,10 @@ export class NameNode extends Node {
     loc?: Location;
     @PlainPro()
     value: string;
+    constructor(val?: string) {
+        super();
+        if (val) this.value = val;
+    }
     visit(visitor: Visitor, context?: any) {
         return visitor.visitNameNode(this, context)
     }
@@ -377,6 +383,7 @@ export class ArgumentNode extends Node {
         isClass: true
     })
     value: ValueNode;
+
     visit(visitor: Visitor, context?: any) {
         return visitor.visitArgumentNode(this, context)
     }
@@ -580,6 +587,10 @@ export class StringValueNode extends Node {
     value: string;
     @PlainPro()
     block?: boolean;
+    constructor(val?: string) {
+        super();
+        if (val) this.value = val;
+    }
     visit(visitor: Visitor, context?: any) {
         return visitor.visitStringValueNode(this, context)
     }
@@ -791,6 +802,10 @@ export class NonNullTypeNode extends Node {
         isClass: true
     })
     type: NamedTypeNode | ListTypeNode;
+    constructor(type?: NamedTypeNode | ListTypeNode) {
+        super();
+        if (type) this.type = type;
+    }
     visit(visitor: Visitor, context?: any) {
         return visitor.visitNonNullTypeNode(this, context)
     }

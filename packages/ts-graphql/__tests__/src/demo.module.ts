@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { DemoGraphql } from './graphql/demo.graphql';
+import { DemoGraphql } from './graphql';
 import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
 @Module({

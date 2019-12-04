@@ -1,11 +1,60 @@
 import * as ts from 'typescript';
-import { Plain, PlainPro } from '@nger/plain';
-export abstract class Node {
-    node: ts.Node;
-    abstract visit(visitor: Visitor, context?: any): any;
-    abstract toJson(visitor: Visitor, context?: any): any;
+import { Plain, PlainPro, toPlain } from '@nger/plain';
+export function toJson(that: any, visitor: Visitor, context?: any, keys: string[] = []) {
+    return toPlain(that, 'kind', (source, instance) => {
+        if (keys.includes(source.property as any)) {
+            return;
+        }
+        if (source.options.isClass) {
+            if (Array.isArray(instance)) {
+                return visitor.visits(instance, context)
+            }
+            return visitor.visit(instance, context)
+        }
+        return instance;
+    })
 }
-export abstract class TypeNode extends Node { }
+export abstract class Node {
+    __node: ts.Node;
+    abstract visit(visitor: Visitor, context?: any): any;
+    toJson(visitor: Visitor, context?: any, ...keys: any[]): any {
+        return toJson(this, visitor, context, keys)
+    }
+}
+export type UnionOrIntersectionTypeNode = UnionTypeNode | IntersectionTypeNode;
+export type TypeNode =
+    KeywordTypeNode
+    | ThisTypeNode
+    | FunctionOrConstructorTypeNodeBase
+    | NodeWithTypeArguments
+    | TypePredicateNode
+    | TypeQueryNode
+    | TypeLiteralNode
+    | ArrayTypeNode
+    | TupleTypeNode
+    | OptionalTypeNode
+    | RestTypeNode
+    | UnionTypeNode
+    | IntersectionTypeNode
+    | ConditionalTypeNode
+    | InferTypeNode
+    | ParenthesizedTypeNode
+    | TypeOperatorNode
+    | IndexedAccessTypeNode
+    | MappedTypeNode
+    | LiteralTypeNode
+    | JSDocTypeExpression
+    | JSDocType;
+export type JSDocType =
+    JSDocAllType | JSDocUnknownType
+    | JSDocNonNullableType | JSDocNullableType
+    | JSDocOptionalType | JSDocFunctionType
+    | JSDocVariadicType | JSDocNamepathType;
+
+export type JSDocTypeReferencingNode =
+    JSDocVariadicType | JSDocOptionalType | JSDocNullableType | JSDocNonNullableType;
+export type NodeWithTypeArguments = TypeReferenceNode;
+export type FunctionOrConstructorTypeNodeBase = FunctionTypeNode | ConstructorTypeNode;
 export type AccessorDeclaration = GetAccessorDeclaration | SetAccessorDeclaration;
 export type FunctionBody = Block;
 export type ConciseBody = FunctionBody | Expression;
@@ -116,15 +165,44 @@ export type ModuleReference = EntityName | ExternalModuleReference;
 export type AssertionExpression = TypeAssertion | AsExpression;
 export type TypeReferenceType = TypeReferenceNode | ExpressionWithTypeArguments;
 export type ClassElement = PropertyDeclaration | SemicolonClassElement | MethodDeclaration;
-export type Modifier = ts.Token<ts.SyntaxKind.AbstractKeyword> | ts.Token<ts.SyntaxKind.AsyncKeyword> | ts.Token<ts.SyntaxKind.ConstKeyword> | ts.Token<ts.SyntaxKind.DeclareKeyword> | ts.Token<ts.SyntaxKind.DefaultKeyword> | ts.Token<ts.SyntaxKind.ExportKeyword> | ts.Token<ts.SyntaxKind.PublicKeyword> | ts.Token<ts.SyntaxKind.PrivateKeyword> | ts.Token<ts.SyntaxKind.ProtectedKeyword> | ts.Token<ts.SyntaxKind.ReadonlyKeyword> | ts.Token<ts.SyntaxKind.StaticKeyword>;
 
+@Plain({
+    desc: [
+        ts.SyntaxKind.AbstractKeyword,
+        ts.SyntaxKind.AsyncKeyword,
+        ts.SyntaxKind.ConstKeyword,
+        ts.SyntaxKind.DeclareKeyword,
+        ts.SyntaxKind.DefaultKeyword,
+        ts.SyntaxKind.ExportKeyword,
+        ts.SyntaxKind.PublicKeyword,
+        ts.SyntaxKind.PrivateKeyword,
+        ts.SyntaxKind.ProtectedKeyword,
+        ts.SyntaxKind.ReadonlyKeyword,
+        ts.SyntaxKind.StaticKeyword
+    ]
+})
+export class Modifier extends Node {
+    @PlainPro()
+    kind: ts.SyntaxKind.AbstractKeyword
+        | ts.SyntaxKind.AsyncKeyword
+        | ts.SyntaxKind.ConstKeyword
+        | ts.SyntaxKind.DeclareKeyword
+        | ts.SyntaxKind.DefaultKeyword
+        | ts.SyntaxKind.ExportKeyword
+        | ts.SyntaxKind.PublicKeyword
+        | ts.SyntaxKind.PrivateKeyword
+        | ts.SyntaxKind.ProtectedKeyword
+        | ts.SyntaxKind.ReadonlyKeyword
+        | ts.SyntaxKind.StaticKeyword;
+
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitModifier(this, context)
+    }
+}
 @Plain({
     desc: ts.SyntaxKind.TypeReference
 })
 export class TypeReferenceNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TypeReference;
     @PlainPro({
@@ -143,12 +221,6 @@ export class TypeReferenceNode extends Node {
     desc: ts.SyntaxKind.Block
 })
 export class Block extends Node {
-    toJson(visitor: Visitor, context?: any): any {
-        return {
-            kind: this.kind,
-            statements: visitor.visits(this.statements, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.Block;
     @PlainPro({
@@ -163,14 +235,6 @@ export class Block extends Node {
     desc: ts.SyntaxKind.Identifier
 })
 export class Identifier extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            escapedText: this.escapedText,
-            originalKeywordKind: this.originalKeywordKind,
-            isInJSDocNamespace: this.isInJSDocNamespace
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.Identifier;
     @PlainPro()
@@ -187,12 +251,6 @@ export class Identifier extends Node {
     desc: ts.SyntaxKind.JSDocOptionalType
 })
 export class JSDocOptionalType extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocOptionalType;
     @PlainPro({
@@ -207,12 +265,6 @@ export class JSDocOptionalType extends Node {
     desc: ts.SyntaxKind.JSDocVariadicType
 })
 export class JSDocVariadicType extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocVariadicType;
     @PlainPro({
@@ -227,12 +279,6 @@ export class JSDocVariadicType extends Node {
     desc: ts.SyntaxKind.JSDocNonNullableType
 })
 export class JSDocNonNullableType extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocNonNullableType;
     @PlainPro({
@@ -247,12 +293,6 @@ export class JSDocNonNullableType extends Node {
     desc: ts.SyntaxKind.JSDocNullableType
 })
 export class JSDocNullableType extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocNullableType;
     @PlainPro({
@@ -267,13 +307,6 @@ export class JSDocNullableType extends Node {
     desc: ts.SyntaxKind.TypeOperator
 })
 export class TypeOperatorNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            operator: this.operator,
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TypeOperator;
     @PlainPro()
@@ -288,15 +321,6 @@ export class TypeOperatorNode extends Node {
     desc: ts.SyntaxKind.TypeParameter
 })
 export class TypeParameterDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            constraint: visitor.visit(this.constraint, context),
-            default: visitor.visit(this.default, context),
-            expression: visitor.visit(this.expression, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TypeParameter;
     @PlainPro({ isClass: true })
@@ -315,15 +339,6 @@ export class TypeParameterDeclaration extends Node {
     desc: ts.SyntaxKind.MappedType
 })
 export class MappedTypeNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            readonlyToken: this.readonlyToken,
-            questionToken: this.questionToken,
-            typeParameter: visitor.visit(this.typeParameter, context),
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.MappedType;
     @PlainPro()
@@ -342,14 +357,6 @@ export class MappedTypeNode extends Node {
     desc: ts.SyntaxKind.TypePredicate
 })
 export class TypePredicateNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            assertsModifier: this.assertsModifier,
-            parameterName: visitor.visit(this.parameterName, context),
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TypePredicate;
     @PlainPro()
@@ -366,11 +373,6 @@ export class TypePredicateNode extends Node {
     desc: ts.SyntaxKind.ThisType
 })
 export class ThisTypeNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ThisType;
     visit(visitor: Visitor, context?: any) {
@@ -381,12 +383,6 @@ export class ThisTypeNode extends Node {
     desc: ts.SyntaxKind.ParenthesizedType
 })
 export class ParenthesizedTypeNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ParenthesizedType;
     @PlainPro({ isClass: true })
@@ -399,12 +395,6 @@ export class ParenthesizedTypeNode extends Node {
     desc: ts.SyntaxKind.ExternalModuleReference
 })
 export class ExternalModuleReference extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            expression: visitor.visit(this.expression, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ExternalModuleReference;
     @PlainPro({ isClass: true })
@@ -417,12 +407,6 @@ export class ExternalModuleReference extends Node {
     desc: ts.SyntaxKind.NamedExports
 })
 export class NamedExports extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            elements: visitor.visits(this.elements, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.NamedExports;
     @PlainPro({ isClass: true })
@@ -435,13 +419,6 @@ export class NamedExports extends Node {
     desc: ts.SyntaxKind.ExportDeclaration
 })
 export class ExportDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            exportClause: visitor.visit(this.exportClause, context),
-            moduleSpecifier: visitor.visit(this.moduleSpecifier, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ExportDeclaration;
     @PlainPro({ isClass: true })
@@ -457,13 +434,6 @@ export class ExportDeclaration extends Node {
     desc: ts.SyntaxKind.ExportSpecifier
 })
 export class ExportSpecifier extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            propertyName: visitor.visit(this.propertyName, context),
-            name: visitor.visit(this.name, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ExportSpecifier;
     @PlainPro({ isClass: true })
@@ -478,11 +448,6 @@ export class ExportSpecifier extends Node {
     desc: ts.SyntaxKind.EndOfFileToken
 })
 export class EndOfFileToken extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.EndOfFileToken;
     visit(visitor: Visitor, context?: any) {
@@ -493,13 +458,6 @@ export class EndOfFileToken extends Node {
     desc: ts.SyntaxKind.EnumMember
 })
 export class EnumMember extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            initializer: visitor.visit(this.initializer, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.EnumMember;
     @PlainPro({ isClass: true })
@@ -514,13 +472,6 @@ export class EnumMember extends Node {
     desc: ts.SyntaxKind.ModuleDeclaration
 })
 export class ModuleDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            body: visitor.visit(this.body, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ModuleDeclaration;
     @PlainPro({
@@ -539,13 +490,6 @@ export class ModuleDeclaration extends Node {
     desc: ts.SyntaxKind.ImportEqualsDeclaration
 })
 export class ImportEqualsDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            moduleReference: visitor.visit(this.moduleReference, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ImportEqualsDeclaration;
     @PlainPro({
@@ -564,24 +508,6 @@ export class ImportEqualsDeclaration extends Node {
     desc: ts.SyntaxKind.SourceFile
 })
 export class SourceFile extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            endOfFileToken: this.endOfFileToken,
-            fileName: this.fileName,
-            text: this.text,
-            amdDependencies: this.amdDependencies,
-            moduleName: this.moduleName,
-            referencedFiles: this.referencedFiles,
-            typeReferenceDirectives: this.typeReferenceDirectives,
-            languageVariant: this.languageVariant,
-            libReferenceDirectives: this.libReferenceDirectives,
-            isDeclarationFile: this.isDeclarationFile,
-            hasNoDefaultLib: this.hasNoDefaultLib,
-            languageVersion: this.languageVersion,
-            statements: visitor.visits(this.statements, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.SourceFile;
     @PlainPro({
@@ -624,18 +550,6 @@ export class SourceFile extends Node {
     desc: ts.SyntaxKind.Constructor
 })
 export class ConstructorDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            asteriskToken: this.asteriskToken,
-            questionToken: this.questionToken,
-            exclamationToken: this.exclamationToken,
-            name: visitor.visit(this.name, context),
-            typeParameters: visitor.visits(this.typeParameters, context),
-            parameters: visitor.visits(this.parameters, context),
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.Constructor;
     @PlainPro({ isClass: true })
@@ -662,19 +576,6 @@ export class ConstructorDeclaration extends Node {
     desc: ts.SyntaxKind.FunctionDeclaration
 })
 export class FunctionDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            body: visitor.visit(this.body, context),
-            asteriskToken: this.asteriskToken,
-            questionToken: this.questionToken,
-            exclamationToken: this.exclamationToken,
-            typeParameters: visitor.visits(this.typeParameters, context),
-            parameters: visitor.visits(this.parameters, context),
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.FunctionDeclaration;
     @PlainPro({ isClass: true })
@@ -693,6 +594,13 @@ export class FunctionDeclaration extends Node {
     parameters: ParameterDeclaration[];
     @PlainPro({ isClass: true })
     type?: TypeNode;
+
+    @PlainPro({ isClass: true })
+    modifiers: Modifier[];
+    @PlainPro()
+    flags: ts.NodeFlags;
+    @PlainPro({ isClass: true })
+    decorators?: Decorator[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitFunctionDeclaration(this, context)
     }
@@ -701,11 +609,6 @@ export class FunctionDeclaration extends Node {
     desc: ts.SyntaxKind.JSDocFunctionType
 })
 export class JSDocFunctionType extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocFunctionType;
     visit(visitor: Visitor, context?: any) {
@@ -716,13 +619,16 @@ export class JSDocFunctionType extends Node {
     desc: ts.SyntaxKind.FunctionType
 })
 export class FunctionTypeNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.FunctionType;
+    @PlainPro({ isClass: true })
+    type: TypeNode;
+    @PlainPro({ isClass: true })
+    name?: PropertyName;
+    @PlainPro({ isClass: true })
+    typeParameters?: TypeParameterDeclaration[];
+    @PlainPro({ isClass: true })
+    parameters: ParameterDeclaration[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitFunctionTypeNode(this, context)
     }
@@ -731,13 +637,16 @@ export class FunctionTypeNode extends Node {
     desc: ts.SyntaxKind.ConstructorType
 })
 export class ConstructorTypeNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ConstructorType;
+    @PlainPro({ isClass: true })
+    type: TypeNode;
+    @PlainPro({ isClass: true })
+    name?: PropertyName;
+    @PlainPro({ isClass: true })
+    typeParameters?: TypeParameterDeclaration[];
+    @PlainPro({ isClass: true })
+    parameters: ParameterDeclaration[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitConstructorTypeNode(this, context)
     }
@@ -746,11 +655,6 @@ export class ConstructorTypeNode extends Node {
     desc: ts.SyntaxKind.IndexSignature
 })
 export class IndexSignatureDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.IndexSignature;
     visit(visitor: Visitor, context?: any) {
@@ -761,16 +665,6 @@ export class IndexSignatureDeclaration extends Node {
     desc: ts.SyntaxKind.MethodSignature
 })
 export class MethodSignature extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            typeParameters: visitor.visits(this.typeParameters, context),
-            parameters: visitor.visits(this.parameters, context),
-            type: visitor.visit(this.type, context),
-            questionToken: this.questionToken
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.MethodSignature;
     @PlainPro({
@@ -800,11 +694,6 @@ export class MethodSignature extends Node {
     desc: ts.SyntaxKind.ConstructSignature
 })
 export class ConstructSignatureDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ConstructSignature;
     visit(visitor: Visitor, context?: any) {
@@ -827,12 +716,6 @@ export class ConstructSignatureDeclaration extends Node {
     ]
 })
 export class KeywordTypeNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            keyword: this.keyword
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.AnyKeyword
         | ts.SyntaxKind.UnknownKeyword
@@ -883,11 +766,6 @@ export class KeywordTypeNode extends Node {
     desc: ts.SyntaxKind.CallSignature
 })
 export class CallSignatureDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.CallSignature;
     visit(visitor: Visitor, context?: any) {
@@ -898,14 +776,6 @@ export class CallSignatureDeclaration extends Node {
     desc: ts.SyntaxKind.ArrowFunction
 })
 export class ArrowFunction extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: this.name,
-            equalsGreaterThanToken: this.equalsGreaterThanToken,
-            body: visitor.visit(this.body, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ArrowFunction;
     @PlainPro()
@@ -924,14 +794,6 @@ export class ArrowFunction extends Node {
     desc: ts.SyntaxKind.TypeAliasDeclaration
 })
 export class TypeAliasDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            typeParameters: visitor.visits(this.typeParameters, context),
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TypeAliasDeclaration;
     @PlainPro({ isClass: true })
@@ -948,13 +810,6 @@ export class TypeAliasDeclaration extends Node {
     desc: ts.SyntaxKind.EnumDeclaration
 })
 export class EnumDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            name: visitor.visit(this.name, context),
-            members: visitor.visits(this.members, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.EnumDeclaration;
     @PlainPro({ isClass: true })
@@ -969,14 +824,6 @@ export class EnumDeclaration extends Node {
     desc: ts.SyntaxKind.PropertyAccessExpression
 })
 export class PropertyAccessEntityNameExpression extends Node {
-    toJson(visitor: Visitor, context?: any): any {
-        return {
-            kind: this.kind,
-            questionDotToken: this.questionDotToken,
-            name: visitor.visit(this.name, context),
-            expression: visitor.visit(this.expression, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.PropertyAccessExpression;
     @PlainPro()
@@ -993,14 +840,6 @@ export class PropertyAccessEntityNameExpression extends Node {
     desc: ts.SyntaxKind.JSDocSignature
 })
 export class JSDocSignature extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            typeParameters: visitor.visits(this.typeParameters, context),
-            parameters: visitor.visits(this.parameters, context),
-            type: visitor.visit(this.type, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocSignature;
     @PlainPro({ isClass: true })
@@ -1017,14 +856,6 @@ export class JSDocSignature extends Node {
     desc: ts.SyntaxKind.JSDocCallbackTag
 })
 export class JSDocCallbackTag extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            fullName: visitor.visit(this.fullName, context),
-            name: visitor.visit(this.name, context),
-            typeExpression: visitor.visit(this.typeExpression, context),
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocCallbackTag;
     @PlainPro({ isClass: true })
@@ -1041,12 +872,6 @@ export class JSDocCallbackTag extends Node {
     desc: ts.SyntaxKind.JSDocTypeExpression
 })
 export class JSDocTypeExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            type: visitor.visit(this.type, context),
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocTypeExpression;
     @PlainPro({
@@ -1061,13 +886,6 @@ export class JSDocTypeExpression extends Node {
     desc: ts.SyntaxKind.JSDocTemplateTag
 })
 export class JSDocTemplateTag extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            constraint: visitor.visit(this.constraint, context),
-            typeParameters: visitor.visits(this.typeParameters, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocTemplateTag;
     @PlainPro({ isClass: true })
@@ -1083,13 +901,20 @@ export class JSDocTemplateTag extends Node {
     desc: ts.SyntaxKind.JSDocParameterTag
 })
 export class JSDocParameterTag extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocParameterTag;
+    @PlainPro({ isClass: true })
+    name: EntityName;
+    @PlainPro({ isClass: true })
+    typeExpression?: JSDocTypeExpression;
+    @PlainPro()
+    isNameFirst: boolean;
+    @PlainPro()
+    isBracketed: boolean;
+    @PlainPro({ isClass: true })
+    tagName: Identifier;
+    @PlainPro()
+    comment?: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocParameterTag(this, context)
     }
@@ -1098,16 +923,14 @@ export class JSDocParameterTag extends Node {
     desc: ts.SyntaxKind.JSDocReturnTag
 })
 export class JSDocReturnTag extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            typeExpression: visitor.visit(this.typeExpression, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocReturnTag;
     @PlainPro({ isClass: true })
     typeExpression?: JSDocTypeExpression;
+    @PlainPro({ isClass: true })
+    tagName: Identifier;
+    @PlainPro()
+    comment?: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocReturnTag(this, context)
     }
@@ -1116,11 +939,6 @@ export class JSDocReturnTag extends Node {
     desc: ts.SyntaxKind.ClassExpression
 })
 export class ClassExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ClassExpression;
     visit(visitor: Visitor, context?: any) {
@@ -1131,12 +949,6 @@ export class ClassExpression extends Node {
     desc: ts.SyntaxKind.Decorator
 })
 export class Decorator extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            expression: visitor.visit(this.expression, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.Decorator;
     @PlainPro({ isClass: true })
@@ -1149,15 +961,6 @@ export class Decorator extends Node {
     desc: ts.SyntaxKind.QualifiedName
 })
 export class QualifiedName extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            left: visitor.visit(this.left, context),
-            right: visitor.visit(this.right, context),
-            decorators: visitor.visits(this.decorators, context),
-            modifiers: this.modifiers,
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.QualifiedName;
     @PlainPro({ isClass: true })
@@ -1166,8 +969,8 @@ export class QualifiedName extends Node {
     right: Identifier;
     @PlainPro({ isClass: true })
     decorators?: Decorator[];
-    @PlainPro({ isClass: true })
-    modifiers?: Modifier[];
+    @PlainPro()
+    modifiers: Modifier[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitQualifiedName(this, context)
     }
@@ -1176,13 +979,6 @@ export class QualifiedName extends Node {
     desc: ts.SyntaxKind.JSDocComment
 })
 export class JSDoc extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            tags: visitor.visits(this.tags, context),
-            comment: this.comment
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocComment;
     @PlainPro({ isClass: true })
@@ -1208,9 +1004,7 @@ export class JSDocUnknownTag extends Node {
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocUnknownTag(this, context)
     }
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocTag;
 }
@@ -1219,12 +1013,6 @@ export class JSDocUnknownTag extends Node {
     desc: ts.SyntaxKind.ExpressionWithTypeArguments
 })
 export class ExpressionWithTypeArguments extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            expression: visitor.visit(this.expression, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ExpressionWithTypeArguments;
     @PlainPro({
@@ -1242,12 +1030,6 @@ export class JSDocAugmentsTag extends Node {
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocAugmentsTag(this, context)
     }
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            class: visitor.visit(this.class, context)
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JSDocAugmentsTag;
     @PlainPro({ isClass: true })
@@ -1260,9 +1042,7 @@ export class JSDocAuthorTag extends Node {
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocAuthorTag(this, context)
     }
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocAuthorTag;
 }
@@ -1273,9 +1053,7 @@ export class JSDocClassTag extends Node {
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocClassTag(this, context)
     }
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocClassTag;
 }
@@ -1286,9 +1064,7 @@ export class JSDocEnumTag extends Node {
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocEnumTag(this, context)
     }
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocEnumTag;
     @PlainPro({ isClass: true })
@@ -1301,9 +1077,7 @@ export class JSDocThisTag extends Node {
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocThisTag(this, context)
     }
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocThisTag;
     @PlainPro({ isClass: true })
@@ -1316,9 +1090,7 @@ export class JSDocTypeTag extends Node {
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJSDocTypeTag(this, context)
     }
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocTypeTag;
     @PlainPro({ isClass: true })
@@ -1329,9 +1101,7 @@ export class JSDocTypeTag extends Node {
     desc: ts.SyntaxKind.JSDocTypeLiteral
 })
 export class JSDocTypeLiteral extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocTypeLiteral;
     @PlainPro({
@@ -1348,9 +1118,7 @@ export class JSDocTypeLiteral extends Node {
     desc: ts.SyntaxKind.JSDocPropertyTag
 })
 export class JSDocPropertyTag extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocPropertyTag;
     @PlainPro({
@@ -1374,9 +1142,7 @@ export class JSDocPropertyTag extends Node {
     desc: ts.SyntaxKind.JSDocTypedefTag
 })
 export class JSDocTypedefTag extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JSDocTypedefTag;
     @PlainPro({
@@ -1399,9 +1165,7 @@ export class JSDocTypedefTag extends Node {
     desc: ts.SyntaxKind.TypeLiteral
 })
 export class TypeLiteralNode extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.TypeLiteral;
     @PlainPro({
@@ -1416,9 +1180,9 @@ export class TypeLiteralNode extends Node {
     desc: ts.SyntaxKind.PropertySignature
 })
 export class PropertySignature extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
+    @PlainPro({isClass: true})
+    jsDoc: JSDoc[];
     @PlainPro()
     kind: ts.SyntaxKind.PropertySignature;
     @PlainPro({
@@ -1443,9 +1207,7 @@ export class PropertySignature extends Node {
     desc: ts.SyntaxKind.InterfaceDeclaration
 })
 export class InterfaceDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.InterfaceDeclaration;
     @PlainPro({
@@ -1472,11 +1234,16 @@ export class InterfaceDeclaration extends Node {
     desc: ts.SyntaxKind.NoSubstitutionTemplateLiteral
 })
 export class NoSubstitutionTemplateLiteral extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.NoSubstitutionTemplateLiteral;
+    @PlainPro()
+    rawText?: string;
+    @PlainPro()
+    text: string;
+    @PlainPro()
+    isUnterminated?: boolean;
+    @PlainPro()
+    hasExtendedUnicodeEscape?: boolean;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitNoSubstitutionTemplateLiteral(this, context)
     }
@@ -1485,9 +1252,7 @@ export class NoSubstitutionTemplateLiteral extends Node {
     desc: ts.SyntaxKind.GetAccessor
 })
 export class GetAccessorDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.GetAccessor;
     @PlainPro({ isClass: true })
@@ -1502,9 +1267,7 @@ export class GetAccessorDeclaration extends Node {
     desc: ts.SyntaxKind.SetAccessor
 })
 export class SetAccessorDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.SetAccessor;
     @PlainPro({ isClass: true })
@@ -1519,9 +1282,15 @@ export class SetAccessorDeclaration extends Node {
     desc: ts.SyntaxKind.MethodDeclaration
 })
 export class MethodDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
+    @PlainPro({ isClass: true })
+    decorators: Decorator[];
+    @PlainPro({ isClass: true })
+    jsDoc: JSDoc[];
+
+    @PlainPro({ isClass: true })
+    modifiers: Modifier[];
+
     @PlainPro()
     kind: ts.SyntaxKind.MethodDeclaration;
     @PlainPro({
@@ -1538,11 +1307,11 @@ export class MethodDeclaration extends Node {
     questionToken?: ts.QuestionToken;
     @PlainPro()
     exclamationToken?: ts.ExclamationToken;
-    @PlainPro()
+    @PlainPro({ isClass: true })
     typeParameters?: TypeParameterDeclaration[];
-    @PlainPro()
+    @PlainPro({ isClass: true })
     parameters: ParameterDeclaration[];
-    @PlainPro()
+    @PlainPro({ isClass: true })
     type?: TypeNode;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitMethodDeclaration(this, context)
@@ -1552,9 +1321,7 @@ export class MethodDeclaration extends Node {
     desc: ts.SyntaxKind.TaggedTemplateExpression
 })
 export class TaggedTemplateExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.TaggedTemplateExpression;
     @PlainPro({ isClass: true })
@@ -1571,9 +1338,7 @@ export class TaggedTemplateExpression extends Node {
     desc: ts.SyntaxKind.JsxText
 })
 export class JsxText extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JsxText;
     @PlainPro()
@@ -1586,9 +1351,7 @@ export class JsxText extends Node {
     desc: ts.SyntaxKind.SpreadAssignment
 })
 export class SpreadAssignment extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.SpreadAssignment;
     @PlainPro({ isClass: true })
@@ -1601,9 +1364,7 @@ export class SpreadAssignment extends Node {
     desc: ts.SyntaxKind.PropertyAssignment
 })
 export class PropertyAssignment extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.PropertyAssignment;
     @PlainPro({ isClass: true })
@@ -1620,9 +1381,7 @@ export class PropertyAssignment extends Node {
     desc: ts.SyntaxKind.ShorthandPropertyAssignment
 })
 export class ShorthandPropertyAssignment extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ShorthandPropertyAssignment;
     @PlainPro({ isClass: true })
@@ -1643,9 +1402,7 @@ export class ShorthandPropertyAssignment extends Node {
     desc: ts.SyntaxKind.EmptyStatement
 })
 export class EmptyStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.EmptyStatement;
     visit(visitor: Visitor, context?: any) {
@@ -1656,9 +1413,7 @@ export class EmptyStatement extends Node {
     desc: ts.SyntaxKind.PropertyAccessExpression
 })
 export class JsxTagNamePropertyAccess extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.PropertyAccessExpression;
     @PlainPro()
@@ -1675,9 +1430,7 @@ export class JsxTagNamePropertyAccess extends Node {
     desc: ts.SyntaxKind.IfStatement
 })
 export class IfStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.IfStatement;
     @PlainPro({ isClass: true })
@@ -1694,9 +1447,6 @@ export class IfStatement extends Node {
     desc: ts.SyntaxKind.ExpressionStatement
 })
 export class ExpressionStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ExpressionStatement;
     @PlainPro({ isClass: true })
@@ -1709,9 +1459,7 @@ export class ExpressionStatement extends Node {
     desc: ts.SyntaxKind.DebuggerStatement
 })
 export class DebuggerStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.DebuggerStatement;
     visit(visitor: Visitor, context?: any) {
@@ -1722,9 +1470,7 @@ export class DebuggerStatement extends Node {
     desc: ts.SyntaxKind.NotEmittedStatement
 })
 export class NotEmittedStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.NotEmittedStatement;
     visit(visitor: Visitor, context?: any) {
@@ -1735,9 +1481,7 @@ export class NotEmittedStatement extends Node {
     desc: ts.SyntaxKind.DefaultClause
 })
 export class DefaultClause extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.DefaultClause;
     @PlainPro({
@@ -1752,9 +1496,6 @@ export class DefaultClause extends Node {
     desc: ts.SyntaxKind.ModuleDeclaration
 })
 export class NamespaceDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ModuleDeclaration;
     @PlainPro({
@@ -1773,9 +1514,6 @@ export class NamespaceDeclaration extends Node {
     desc: ts.SyntaxKind.NamedImports
 })
 export class NamedImports extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.NamedImports;
     @PlainPro({
@@ -1790,9 +1528,6 @@ export class NamedImports extends Node {
     desc: ts.SyntaxKind.ImportSpecifier
 })
 export class ImportSpecifier extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ImportSpecifier;
     @PlainPro({ isClass: true })
@@ -1807,9 +1542,7 @@ export class ImportSpecifier extends Node {
     desc: ts.SyntaxKind.NamespaceImport
 })
 export class NamespaceImport extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.NamespaceImport;
     @PlainPro({ isClass: true })
@@ -1822,9 +1555,7 @@ export class NamespaceImport extends Node {
     desc: ts.SyntaxKind.CaseClause
 })
 export class CaseClause extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.CaseClause;
     @PlainPro({
@@ -1843,9 +1574,7 @@ export class CaseClause extends Node {
     desc: ts.SyntaxKind.ComputedPropertyName
 })
 export class ComputedPropertyName extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ComputedPropertyName;
     @PlainPro({ isClass: true })
@@ -1858,9 +1587,7 @@ export class ComputedPropertyName extends Node {
     desc: ts.SyntaxKind.ObjectBindingPattern
 })
 export class ObjectBindingPattern extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ObjectBindingPattern;
     @PlainPro({
@@ -1875,9 +1602,7 @@ export class ObjectBindingPattern extends Node {
     desc: ts.SyntaxKind.ArrayBindingPattern
 })
 export class ArrayBindingPattern extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ArrayBindingPattern;
     @PlainPro({
@@ -1892,9 +1617,7 @@ export class ArrayBindingPattern extends Node {
     desc: ts.SyntaxKind.Parameter
 })
 export class ParameterDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.Parameter;
     @PlainPro()
@@ -1921,9 +1644,7 @@ export class ParameterDeclaration extends Node {
     desc: ts.SyntaxKind.BindingElement
 })
 export class BindingElement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.BindingElement;
     @PlainPro({ isClass: true })
@@ -1942,11 +1663,14 @@ export class BindingElement extends Node {
     desc: ts.SyntaxKind.VariableDeclarationList
 })
 export class VariableDeclarationList extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.VariableDeclarationList;
+    @PlainPro()
+    modifiers: Modifier[];
+    @PlainPro()
+    flags: ts.NodeFlags;
+    @PlainPro({ isClass: true })
+    decorators?: Decorator[];
     @PlainPro({
         isClass: true
     })
@@ -1959,11 +1683,14 @@ export class VariableDeclarationList extends Node {
     desc: ts.SyntaxKind.VariableStatement
 })
 export class VariableStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.VariableStatement;
+    @PlainPro()
+    modifiers: Modifier[];
+    @PlainPro()
+    flags: ts.NodeFlags;
+    @PlainPro({ isClass: true })
+    decorators?: Decorator[];
     @PlainPro({
         isClass: true
     })
@@ -1976,15 +1703,17 @@ export class VariableStatement extends Node {
     desc: ts.SyntaxKind.VariableDeclaration
 })
 export class VariableDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.VariableDeclaration;
+    @PlainPro()
+    flags: ts.NodeFlags;
+    @PlainPro({ isClass: true })
+    decorators?: Decorator[];
     @PlainPro({
         isClass: true
     })
     name: BindingName;
+    @PlainPro()
     exclamationToken?: ts.ExclamationToken;
     @PlainPro({
         isClass: true
@@ -1994,17 +1723,24 @@ export class VariableDeclaration extends Node {
         isClass: true
     })
     initializer?: Expression;
+    @PlainPro({
+        isClass: true
+    })
+    modifiers: Modifier[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitVariableDeclaration(this, context)
+    }
+    isConst() {
+        return this.flags === ts.NodeFlags.Const
+    }
+    isLet() {
+        return this.flags === ts.NodeFlags.Let
     }
 }
 @Plain({
     desc: ts.SyntaxKind.DoStatement
 })
 export class DoStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.DoStatement;
     @PlainPro({
@@ -2019,9 +1755,6 @@ export class DoStatement extends Node {
     desc: ts.SyntaxKind.WhileStatement
 })
 export class WhileStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.WhileStatement;
     @PlainPro({
@@ -2036,9 +1769,6 @@ export class WhileStatement extends Node {
     desc: ts.SyntaxKind.ForStatement
 })
 export class ForStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ForStatement;
     @PlainPro({
@@ -2061,9 +1791,6 @@ export class ForStatement extends Node {
     desc: ts.SyntaxKind.ForInStatement
 })
 export class ForInStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ForInStatement;
     @PlainPro({
@@ -2082,9 +1809,6 @@ export class ForInStatement extends Node {
     desc: ts.SyntaxKind.ForOfStatement
 })
 export class ForOfStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ForOfStatement;
     @PlainPro()
@@ -2107,9 +1831,6 @@ export class ForOfStatement extends Node {
     desc: ts.SyntaxKind.BreakStatement
 })
 export class BreakStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.BreakStatement;
     @PlainPro({
@@ -2124,9 +1845,6 @@ export class BreakStatement extends Node {
     desc: ts.SyntaxKind.ContinueStatement
 })
 export class ContinueStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ContinueStatement;
     @PlainPro({
@@ -2141,9 +1859,6 @@ export class ContinueStatement extends Node {
     desc: ts.SyntaxKind.ReturnStatement
 })
 export class ReturnStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ReturnStatement;
     @PlainPro({
@@ -2158,9 +1873,6 @@ export class ReturnStatement extends Node {
     desc: ts.SyntaxKind.WithStatement
 })
 export class WithStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.WithStatement;
     @PlainPro({
@@ -2179,9 +1891,6 @@ export class WithStatement extends Node {
     desc: ts.SyntaxKind.LabeledStatement
 })
 export class LabeledStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.LabeledStatement;
     @PlainPro({
@@ -2200,9 +1909,6 @@ export class LabeledStatement extends Node {
     desc: ts.SyntaxKind.CaseBlock
 })
 export class CaseBlock extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.CaseBlock;
     @PlainPro({
@@ -2217,9 +1923,6 @@ export class CaseBlock extends Node {
     desc: ts.SyntaxKind.SwitchStatement
 })
 export class SwitchStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.SwitchStatement;
     @PlainPro({
@@ -2243,9 +1946,6 @@ export class SwitchStatement extends Node {
     desc: ts.SyntaxKind.ThrowStatement
 })
 export class ThrowStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ThrowStatement;
     @PlainPro({
@@ -2260,9 +1960,6 @@ export class ThrowStatement extends Node {
     desc: ts.SyntaxKind.CatchClause
 })
 export class CatchClause extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.CatchClause;
     @PlainPro({
@@ -2281,9 +1978,6 @@ export class CatchClause extends Node {
     desc: ts.SyntaxKind.TryStatement
 })
 export class TryStatement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TryStatement;
     @PlainPro({
@@ -2306,9 +2000,6 @@ export class TryStatement extends Node {
     desc: ts.SyntaxKind.ImportClause
 })
 export class ImportClause extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ImportClause;
     @PlainPro({
@@ -2327,19 +2018,16 @@ export class ImportClause extends Node {
     desc: ts.SyntaxKind.ImportDeclaration
 })
 export class ImportDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ImportDeclaration;
     @PlainPro({
         isClass: true
     })
-    importClause?: ImportClause;
+    moduleSpecifier: Expression;
     @PlainPro({
         isClass: true
     })
-    moduleSpecifier: Expression;
+    importClause?: ImportClause;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitImportDeclaration(this, context)
     }
@@ -2349,9 +2037,6 @@ export class ImportDeclaration extends Node {
     desc: ts.SyntaxKind.ModuleBlock
 })
 export class ModuleBlock extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ModuleBlock;
     @PlainPro({
@@ -2364,9 +2049,6 @@ export class ModuleBlock extends Node {
 }
 @Plain()
 export class JSDocNamespaceDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro({
         isClass: true
     })
@@ -2384,9 +2066,6 @@ export class JSDocNamespaceDeclaration extends Node {
     desc: ts.SyntaxKind.JsxSpreadAttribute
 })
 export class JsxSpreadAttribute extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JsxSpreadAttribute;
     @PlainPro({
@@ -2401,14 +2080,6 @@ export class JsxSpreadAttribute extends Node {
     desc: ts.SyntaxKind.StringLiteral
 })
 export class StringLiteral extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        return {
-            kind: this.kind,
-            text: this.text,
-            isUnterminated: this.isUnterminated,
-            hasExtendedUnicodeEscape: this.hasExtendedUnicodeEscape
-        }
-    }
     @PlainPro()
     kind: ts.SyntaxKind.StringLiteral;
     @PlainPro()
@@ -2425,9 +2096,7 @@ export class StringLiteral extends Node {
     desc: ts.SyntaxKind.JsxAttribute
 })
 export class JsxAttribute extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+    @PlainPro()
     kind: ts.SyntaxKind.JsxAttribute;
     @PlainPro({
         isClass: true
@@ -2445,9 +2114,7 @@ export class JsxAttribute extends Node {
     desc: ts.SyntaxKind.ObjectLiteralExpression
 })
 export class ObjectLiteralExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+    @PlainPro()
     kind: ts.SyntaxKind.ObjectLiteralExpression;
     @PlainPro({
         isClass: true
@@ -2461,9 +2128,7 @@ export class ObjectLiteralExpression extends Node {
     desc: ts.SyntaxKind.JsxAttributes
 })
 export class JsxAttributes extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+    @PlainPro()
     kind: ts.SyntaxKind.JsxAttributes;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJsxAttributes(this, context)
@@ -2473,9 +2138,7 @@ export class JsxAttributes extends Node {
     desc: ts.SyntaxKind.JsxOpeningFragment
 })
 export class JsxOpeningFragment extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+    @PlainPro()
     kind: ts.SyntaxKind.JsxOpeningFragment;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitJsxOpeningFragment(this, context)
@@ -2485,9 +2148,6 @@ export class JsxOpeningFragment extends Node {
     desc: ts.SyntaxKind.JsxClosingFragment
 })
 export class JsxClosingFragment extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JsxClosingFragment;
     visit(visitor: Visitor, context?: any) {
@@ -2498,9 +2158,6 @@ export class JsxClosingFragment extends Node {
     desc: ts.SyntaxKind.JsxFragment
 })
 export class JsxFragment extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JsxFragment;
     @PlainPro({
@@ -2524,9 +2181,6 @@ export class JsxFragment extends Node {
     desc: ts.SyntaxKind.JsxSelfClosingElement
 })
 export class JsxSelfClosingElement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JsxSelfClosingElement;
     @PlainPro({
@@ -2549,9 +2203,6 @@ export class JsxSelfClosingElement extends Node {
     desc: ts.SyntaxKind.JsxOpeningElement
 })
 export class JsxOpeningElement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JsxOpeningElement;
     @PlainPro({ isClass: true })
@@ -2568,9 +2219,6 @@ export class JsxOpeningElement extends Node {
     desc: ts.SyntaxKind.JsxClosingElement
 })
 export class JsxClosingElement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JsxClosingElement;
     @PlainPro({
@@ -2585,9 +2233,6 @@ export class JsxClosingElement extends Node {
     desc: ts.SyntaxKind.JsxElement
 })
 export class JsxElement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.JsxElement;
     @PlainPro({
@@ -2611,9 +2256,6 @@ export class JsxElement extends Node {
     desc: ts.SyntaxKind.MetaProperty
 })
 export class MetaProperty extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.MetaProperty;
     @PlainPro()
@@ -2628,9 +2270,6 @@ export class MetaProperty extends Node {
     desc: ts.SyntaxKind.ArrayLiteralExpression
 })
 export class ArrayLiteralExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ArrayLiteralExpression;
     @PlainPro({ isClass: true })
@@ -2643,9 +2282,6 @@ export class ArrayLiteralExpression extends Node {
     desc: ts.SyntaxKind.ParenthesizedExpression
 })
 export class ParenthesizedExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ParenthesizedExpression;
     @PlainPro({ isClass: true })
@@ -2658,9 +2294,7 @@ export class ParenthesizedExpression extends Node {
     desc: ts.SyntaxKind.TemplateHead
 })
 export class TemplateHead extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+    @PlainPro()
     kind: ts.SyntaxKind.TemplateHead;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitTemplateHead(this, context)
@@ -2670,9 +2304,6 @@ export class TemplateHead extends Node {
     desc: ts.SyntaxKind.TemplateExpression
 })
 export class TemplateExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TemplateExpression;
     @PlainPro({ isClass: true })
@@ -2687,9 +2318,6 @@ export class TemplateExpression extends Node {
     desc: ts.SyntaxKind.TemplateSpan
 })
 export class TemplateSpan extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TemplateSpan;
     @PlainPro({ isClass: true })
@@ -2704,9 +2332,7 @@ export class TemplateSpan extends Node {
     desc: ts.SyntaxKind.TemplateMiddle
 })
 export class TemplateMiddle extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     rawText?: string;
     @PlainPro()
@@ -2719,9 +2345,7 @@ export class TemplateMiddle extends Node {
     desc: ts.SyntaxKind.FunctionExpression
 })
 export class FunctionExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.FunctionExpression;
     @PlainPro({ isClass: true })
@@ -2736,9 +2360,7 @@ export class FunctionExpression extends Node {
     desc: ts.SyntaxKind.TemplateTail
 })
 export class TemplateTail extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.TemplateTail;
     visit(visitor: Visitor, context?: any) {
@@ -2749,9 +2371,7 @@ export class TemplateTail extends Node {
     desc: ts.SyntaxKind.ThisKeyword
 })
 export class ThisExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ThisKeyword;
     visit(visitor: Visitor, context?: any) {
@@ -2762,9 +2382,6 @@ export class ThisExpression extends Node {
     desc: ts.SyntaxKind.SuperKeyword
 })
 export class SuperExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.SuperKeyword;
     visit(visitor: Visitor, context?: any) {
@@ -2775,9 +2392,6 @@ export class SuperExpression extends Node {
     desc: ts.SyntaxKind.ImportKeyword
 })
 export class ImportExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.ImportKeyword;
     visit(visitor: Visitor, context?: any) {
@@ -2788,9 +2402,6 @@ export class ImportExpression extends Node {
     desc: ts.SyntaxKind.NullKeyword
 })
 export class NullLiteral extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.NullKeyword;
     visit(visitor: Visitor, context?: any) {
@@ -2801,11 +2412,11 @@ export class NullLiteral extends Node {
     desc: [ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword]
 })
 export class BooleanLiteral extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.TrueKeyword | ts.SyntaxKind.FalseKeyword;
+    isTrue() {
+        return this.kind === ts.SyntaxKind.TrueKeyword;
+    }
     visit(visitor: Visitor, context?: any) {
         return visitor.visitBooleanLiteral(this, context)
     }
@@ -2814,9 +2425,7 @@ export class BooleanLiteral extends Node {
     desc: ts.SyntaxKind.PartiallyEmittedExpression
 })
 export class PartiallyEmittedExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.PartiallyEmittedExpression;
     @PlainPro({ isClass: true })
@@ -2829,9 +2438,7 @@ export class PartiallyEmittedExpression extends Node {
     desc: ts.SyntaxKind.NonNullExpression
 })
 export class NonNullExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.NonNullExpression;
     @PlainPro({ isClass: true })
@@ -2844,9 +2451,7 @@ export class NonNullExpression extends Node {
     desc: ts.SyntaxKind.PostfixUnaryExpression
 })
 export class PostfixUnaryExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.PostfixUnaryExpression;
     @PlainPro({ isClass: true })
@@ -2861,9 +2466,7 @@ export class PostfixUnaryExpression extends Node {
     desc: ts.SyntaxKind.PrefixUnaryExpression
 })
 export class PrefixUnaryExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.PrefixUnaryExpression;
     @PlainPro()
@@ -2878,9 +2481,7 @@ export class PrefixUnaryExpression extends Node {
     desc: ts.SyntaxKind.DeleteExpression
 })
 export class DeleteExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.DeleteExpression;
     @PlainPro({ isClass: true })
@@ -2893,9 +2494,7 @@ export class DeleteExpression extends Node {
     desc: ts.SyntaxKind.TypeOfExpression
 })
 export class TypeOfExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.TypeOfExpression;
     @PlainPro({ isClass: true })
@@ -2908,9 +2507,6 @@ export class TypeOfExpression extends Node {
     desc: ts.SyntaxKind.VoidExpression
 })
 export class VoidExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.VoidExpression;
     @PlainPro({ isClass: true })
@@ -2923,9 +2519,6 @@ export class VoidExpression extends Node {
     desc: ts.SyntaxKind.AwaitExpression
 })
 export class AwaitExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.AwaitExpression;
     @PlainPro({ isClass: true })
@@ -2938,9 +2531,7 @@ export class AwaitExpression extends Node {
     desc: ts.SyntaxKind.TypeAssertionExpression
 })
 export class TypeAssertion extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.TypeAssertionExpression;
     @PlainPro({ isClass: true })
@@ -2955,9 +2546,7 @@ export class TypeAssertion extends Node {
     desc: ts.SyntaxKind.CommaListExpression
 })
 export class CommaListExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.CommaListExpression;
     @PlainPro({ isClass: true })
@@ -2970,9 +2559,7 @@ export class CommaListExpression extends Node {
     desc: ts.SyntaxKind.JsxExpression
 })
 export class JsxExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.JsxExpression;
     @PlainPro()
@@ -2987,9 +2574,7 @@ export class JsxExpression extends Node {
     desc: ts.SyntaxKind.AsExpression
 })
 export class AsExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.AsExpression;
     @PlainPro({ isClass: true })
@@ -3004,9 +2589,6 @@ export class AsExpression extends Node {
     desc: ts.SyntaxKind.CallExpression
 })
 export class CallExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.CallExpression;
     @PlainPro({ isClass: true })
@@ -3025,9 +2607,7 @@ export class CallExpression extends Node {
     desc: ts.SyntaxKind.NewExpression
 })
 export class NewExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.NewExpression;
     @PlainPro({ isClass: true })
@@ -3044,9 +2624,7 @@ export class NewExpression extends Node {
     desc: ts.SyntaxKind.SpreadElement
 })
 export class SpreadElement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.SpreadElement;
     @PlainPro({ isClass: true })
@@ -3059,9 +2637,7 @@ export class SpreadElement extends Node {
     desc: ts.SyntaxKind.ConditionalExpression
 })
 export class ConditionalExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ConditionalExpression;
     @PlainPro({ isClass: true })
@@ -3082,9 +2658,7 @@ export class ConditionalExpression extends Node {
     desc: ts.SyntaxKind.ElementAccessExpression
 })
 export class ElementAccessExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ElementAccessExpression;
     @PlainPro({
@@ -3106,9 +2680,7 @@ export class ElementAccessExpression extends Node {
     desc: ts.SyntaxKind.OmittedExpression
 })
 export class OmittedExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.OmittedExpression;
     visit(visitor: Visitor, context?: any) {
@@ -3119,9 +2691,7 @@ export class OmittedExpression extends Node {
     desc: ts.SyntaxKind.YieldExpression
 })
 export class YieldExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.YieldExpression;
     @PlainPro()
@@ -3138,9 +2708,7 @@ export class YieldExpression extends Node {
     desc: ts.SyntaxKind.SyntheticExpression
 })
 export class SyntheticExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.SyntheticExpression;
     @PlainPro()
@@ -3155,9 +2723,6 @@ export class SyntheticExpression extends Node {
     desc: ts.SyntaxKind.PropertyAccessExpression
 })
 export class PropertyAccessExpression extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.PropertyAccessExpression;
     @PlainPro({
@@ -3178,11 +2743,14 @@ export class PropertyAccessExpression extends Node {
     desc: ts.SyntaxKind.BigIntLiteral
 })
 export class BigIntLiteral extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.BigIntLiteral;
+    @PlainPro()
+    text: string;
+    @PlainPro()
+    isUnterminated?: boolean;
+    @PlainPro()
+    hasExtendedUnicodeEscape?: boolean;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitBigIntLiteral(this, context)
     }
@@ -3191,11 +2759,14 @@ export class BigIntLiteral extends Node {
     desc: ts.SyntaxKind.NumericLiteral
 })
 export class NumericLiteral extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.NumericLiteral;
+    @PlainPro()
+    text: string;
+    @PlainPro()
+    isUnterminated?: boolean;
+    @PlainPro()
+    hasExtendedUnicodeEscape?: boolean;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitNumericLiteral(this, context)
     }
@@ -3204,9 +2775,13 @@ export class NumericLiteral extends Node {
     desc: ts.SyntaxKind.ClassDeclaration
 })
 export class ClassDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
+    @PlainPro()
+    flags: ts.NodeFlags;
+    @PlainPro({ isClass: true })
+    decorators?: Decorator[];
+    @PlainPro({ isClass: true })
+    modifiers?: Modifier[];
     @PlainPro()
     kind: ts.SyntaxKind.ClassDeclaration
     @PlainPro({
@@ -3235,9 +2810,16 @@ export class ClassDeclaration extends Node {
     desc: ts.SyntaxKind.PropertyDeclaration
 })
 export class PropertyDeclaration extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+    @PlainPro({ isClass: true })
+    modifiers: Modifier[];
+    @PlainPro()
+    flags: ts.NodeFlags;
+    @PlainPro({ isClass: true })
+    decorators?: Decorator[];
+
+    @PlainPro({ isClass: true })
+    jsDoc: JSDoc[];
+
     @PlainPro()
     kind: ts.SyntaxKind.PropertyDeclaration;
     @PlainPro({
@@ -3264,9 +2846,7 @@ export class PropertyDeclaration extends Node {
     desc: ts.SyntaxKind.SemicolonClassElement
 })
 export class SemicolonClassElement extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.SemicolonClassElement;
     visit(visitor: Visitor, context?: any) {
@@ -3277,15 +2857,15 @@ export class SemicolonClassElement extends Node {
     desc: ts.SyntaxKind.HeritageClause
 })
 export class HeritageClause extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     @PlainPro()
     kind: ts.SyntaxKind.HeritageClause;
     @PlainPro()
     token: ts.SyntaxKind.ExtendsKeyword | ts.SyntaxKind.ImplementsKeyword;
     @PlainPro({ isClass: true })
     types: ExpressionWithTypeArguments[];
+    getToken() {
+        return this.token === ts.SyntaxKind.ExtendsKeyword ? 'extends' : 'implements';
+    }
     visit(visitor: Visitor, context?: any) {
         return visitor.visitHeritageClause(this, context)
     }
@@ -3295,9 +2875,7 @@ export class HeritageClause extends Node {
     desc: ts.SyntaxKind.ExportAssignment
 })
 export class ExportAssignment extends Node {
-    toJson(visitor: Visitor, context?: any) {
-        throw new Error("Method not implemented.");
-    }
+
     @PlainPro()
     kind: ts.SyntaxKind.ExportAssignment;
     @PlainPro()
@@ -3318,38 +2896,895 @@ export type Declaration = NamedDeclaration;
 export type NamedDeclaration = DeclarationStatement;
 export type DeclarationStatement = FunctionDeclaration | MethodDeclaration | PropertyDeclaration;
 @Plain({
-    desc: 999
+    desc: ts.SyntaxKind.ConditionalType
 })
-export class Symbol {
+export class ConditionalTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitConditionalTypeNode(this, context)
+    }
     @PlainPro()
-    kind: 999 = 999;
+    kind: ts.SyntaxKind.ConditionalType;
+    @PlainPro({ isClass: true })
+    checkType: TypeNode;
+    @PlainPro({ isClass: true })
+    extendsType: TypeNode;
+    @PlainPro({ isClass: true })
+    trueType: TypeNode;
+    @PlainPro({ isClass: true })
+    falseType: TypeNode;
+}
+@Plain({
+    desc: ts.SyntaxKind.InferType
+})
+export class InferTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitInferTypeNode(this, context)
+    }
     @PlainPro()
-    flags: ts.SymbolFlags;
+    kind: ts.SyntaxKind.InferType;
+    @PlainPro({ isClass: true })
+    typeParameter: TypeParameterDeclaration;
+}
+
+@Plain({
+    desc: ts.SyntaxKind.UnionType
+})
+export class UnionTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitUnionTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.UnionType;
+    @PlainPro({ isClass: true })
+    types: TypeNode[];
+}
+@Plain({
+    desc: ts.SyntaxKind.IntersectionType
+})
+export class IntersectionTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitIntersectionTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.IntersectionType;
+    @PlainPro({ isClass: true })
+    types: TypeNode[];
+}
+@Plain({
+    desc: ts.SyntaxKind.IndexedAccessType
+})
+export class IndexedAccessTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitIndexedAccessTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.IndexedAccessType;
+    @PlainPro({ isClass: true })
+    objectType: TypeNode;
+    @PlainPro({ isClass: true })
+    indexType: TypeNode;
+}
+export type LiteralExpression =
+    RegularExpressionLiteral | NoSubstitutionTemplateLiteral
+    | NumericLiteral | BigIntLiteral;
+
+@Plain({
+    desc: ts.SyntaxKind.RegularExpressionLiteral
+})
+export class RegularExpressionLiteral extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitRegularExpressionLiteral(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.RegularExpressionLiteral;
+    @PlainPro()
+    text: string;
+    @PlainPro()
+    isUnterminated?: boolean;
+    @PlainPro()
+    hasExtendedUnicodeEscape?: boolean;
+}
+@Plain({
+    desc: ts.SyntaxKind.IndexedAccessType
+})
+export class LiteralTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitLiteralTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.LiteralType;
+    @PlainPro({ isClass: true })
+    literal: BooleanLiteral | LiteralExpression | PrefixUnaryExpression;
+}
+@Plain({
+    desc: ts.SyntaxKind.TypeQuery
+})
+export class TypeQueryNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTypeQueryNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.TypeQuery;
+    @PlainPro({ isClass: true })
+    exprName: EntityName;
+}
+@Plain({
+    desc: ts.SyntaxKind.JSDocAllType
+})
+export class JSDocAllType extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitJSDocAllType(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.JSDocAllType;
+}
+@Plain({
+    desc: ts.SyntaxKind.JSDocUnknownType
+})
+export class JSDocUnknownType extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitJSDocUnknownType(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.JSDocUnknownType;
+}
+@Plain({
+    desc: ts.SyntaxKind.JSDocNamepathType
+})
+export class JSDocNamepathType extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitJSDocNamepathType(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.JSDocNamepathType;
+    @PlainPro({ isClass: true })
+    type: TypeNode;
+}
+@Plain({
+    desc: ts.SyntaxKind.ArrayType
+})
+export class ArrayTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitArrayTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.ArrayType;
+    @PlainPro({ isClass: true })
+    elementType: TypeNode;
+}
+@Plain({
+    desc: ts.SyntaxKind.TupleType
+})
+export class TupleTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTupleTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.TupleType;
+    @PlainPro({ isClass: true })
+    elementTypes: TypeNode[];
+}
+@Plain({
+    desc: ts.SyntaxKind.OptionalType
+})
+export class OptionalTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitOptionalTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.OptionalType;
+    @PlainPro({ isClass: true })
+    type: TypeNode;
+}
+@Plain({
+    desc: ts.SyntaxKind.RestType
+})
+export class RestTypeNode extends Node {
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitRestTypeNode(this, context)
+    }
+    @PlainPro()
+    kind: ts.SyntaxKind.RestType;
+    @PlainPro({ isClass: true })
+    type: TypeNode;
+}
+export type Symbol = NoneSymbol | FunctionScopedVariableSymbol | BlockScopedVariableSymbol;
+@Plain({
+    desc: { flags: ts.SymbolFlags.None }
+})
+export class NoneSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.None;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitNoneSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.FunctionScopedVariable }
+})
+export class FunctionScopedVariableSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.FunctionScopedVariable;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitFunctionScopedVariableSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.BlockScopedVariable }
+})
+export class BlockScopedVariableSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.BlockScopedVariable;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitBlockScopedVariableSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Property }
+})
+export class PropertySymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Property;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitPropertySymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.EnumMember }
+})
+export class EnumMemberSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.EnumMember;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitEnumMemberSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Function }
+})
+export class FunctionSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Function;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitFunctionSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Class }
+})
+export class ClassSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Class;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitClassSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Interface }
+})
+export class InterfaceSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Interface;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitInterfaceSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ConstEnum }
+})
+export class ConstEnumSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ConstEnum;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitConstEnumSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.RegularEnum }
+})
+export class RegularEnumSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.RegularEnum;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitRegularEnumSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ValueModule }
+})
+export class ValueModuleSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ValueModule;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitValueModuleSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.NamespaceModule }
+})
+export class NamespaceModuleSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.NamespaceModule;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitNamespaceModuleSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.TypeLiteral }
+})
+export class TypeLiteralSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.TypeLiteral;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTypeLiteralSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ObjectLiteral }
+})
+export class ObjectLiteralSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ObjectLiteral;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitObjectLiteralSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Method }
+})
+export class MethodSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Method;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitMethodSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Constructor }
+})
+export class ConstructorSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Constructor;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitConstructorSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.GetAccessor }
+})
+export class GetAccessorSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.GetAccessor;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitGetAccessorSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.SetAccessor }
+})
+export class SetAccessorSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.SetAccessor;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitSetAccessorSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Signature }
+})
+export class SignatureSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Signature;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitSignatureSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.TypeParameter }
+})
+export class TypeParameterSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.TypeParameter;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTypeParameterSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.TypeAlias }
+})
+export class TypeAliasSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.TypeAlias;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTypeAliasSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ExportValue }
+})
+export class ExportValueSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ExportValue;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitExportValueSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Alias }
+})
+export class AliasSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Alias;
+    @PlainPro({ isClass: true })
+    declarations: Node[];
+    @PlainPro()
+    escapedName: string;
+    @PlainPro()
+    name: string;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitAliasSymbol(this, context)
+    }
+    get(checker: ts.TypeChecker) {
+        return checker.getDeclaredTypeOfSymbol(this.__node as any)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Prototype }
+})
+export class PrototypeSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Prototype;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitPrototypeSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ExportStar, kind: undefined }
+})
+export class ExportStarSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ExportStar;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitExportStarSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Optional }
+})
+export class OptionalSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Optional;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitOptionalSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Transient }
+})
+export class TransientSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Transient;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTransientSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Assignment }
+})
+export class AssignmentSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Assignment;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitAssignmentSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ModuleExports }
+})
+export class ModuleExportsSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ModuleExports;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitModuleExportsSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Enum }
+})
+export class EnumSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Enum;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitEnumSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Variable }
+})
+export class VariableSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Variable;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitVariableSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Value }
+})
+export class ValueSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Value;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitValueSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Type }
+})
+export class TypeSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Type;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTypeSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Namespace }
+})
+export class NamespaceSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Namespace;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitNamespaceSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Module }
+})
+export class ModuleSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Module;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitModuleSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.Accessor }
+})
+export class AccessorSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.Accessor;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitAccessorSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.FunctionScopedVariableExcludes }
+})
+export class FunctionScopedVariableExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.FunctionScopedVariableExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitFunctionScopedVariableExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.BlockScopedVariableExcludes }
+})
+export class BlockScopedVariableExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.BlockScopedVariableExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitBlockScopedVariableExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ParameterExcludes }
+})
+export class ParameterExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ParameterExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitParameterExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.PropertyExcludes }
+})
+export class PropertyExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.PropertyExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitPropertyExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.EnumMemberExcludes }
+})
+export class EnumMemberExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.EnumMemberExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitEnumMemberExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.FunctionExcludes }
+})
+export class FunctionExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.FunctionExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitFunctionExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ClassExcludes }
+})
+export class ClassExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ClassExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitClassExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.InterfaceExcludes }
+})
+export class InterfaceExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.InterfaceExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitInterfaceExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.RegularEnumExcludes }
+})
+export class RegularEnumExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.RegularEnumExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitRegularEnumExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ConstEnumExcludes }
+})
+export class ConstEnumExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ConstEnumExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitConstEnumExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ValueModuleExcludes }
+})
+export class ValueModuleExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ValueModuleExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitValueModuleExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.NamespaceModuleExcludes }
+})
+export class NamespaceModuleExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.NamespaceModuleExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitNamespaceModuleExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.MethodExcludes }
+})
+export class MethodExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.MethodExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitMethodExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.GetAccessorExcludes }
+})
+export class GetAccessorExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.GetAccessorExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitGetAccessorExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.SetAccessorExcludes }
+})
+export class SetAccessorExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.SetAccessorExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitSetAccessorExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.TypeParameterExcludes }
+})
+export class TypeParameterExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.TypeParameterExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTypeParameterExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.TypeAliasExcludes }
+})
+export class TypeAliasExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.TypeAliasExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitTypeAliasExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.AliasExcludes }
+})
+export class AliasExcludesSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.AliasExcludes;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitAliasExcludesSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ModuleMember }
+})
+export class ModuleMemberSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ModuleMember;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitModuleMemberSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ExportHasLocal }
+})
+export class ExportHasLocalSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ExportHasLocal;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitExportHasLocalSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.BlockScoped }
+})
+export class BlockScopedSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.BlockScoped;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitBlockScopedSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.PropertyOrAccessor }
+})
+export class PropertyOrAccessorSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.PropertyOrAccessor;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitPropertyOrAccessorSymbol(this, context)
+    }
+}
+@Plain({
+    desc: { flags: ts.SymbolFlags.ClassMember }
+})
+export class ClassMemberSymbol extends Node {
+    @PlainPro()
+    flags: ts.SymbolFlags.ClassMember;
+    visit(visitor: Visitor, context?: any) {
+        return visitor.visitClassMemberSymbol(this, context)
+    }
+}
+export type DestructuringPattern = BindingPattern | ObjectLiteralExpression | ArrayLiteralExpression;
+@Plain({
+    desc: {
+        flags: ts.TypeFlags
+    }
+})
+export class Type {
     @PlainPro()
     id: number;
     @PlainPro()
-    escapedName: string;
+    flags: ts.TypeFlags;
     @PlainPro({ isClass: true })
-    declarations: Declaration[];
+    symbol: Symbol;
     @PlainPro({ isClass: true })
-    valueDeclaration: Declaration;
-    @PlainPro()
-    members?: ts.SymbolTable;
-    @PlainPro()
-    exports?: ts.SymbolTable;
-    @PlainPro()
-    globalExports?: ts.SymbolTable;
-    @PlainPro()
-    checkFlags: number;
-    @PlainPro({
-        isClass: true
-    })
-    exportSymbol: Symbol;
-    @PlainPro()
-    name: string;
+    pattern?: DestructuringPattern;
+    @PlainPro({ isClass: true })
+    aliasSymbol?: Symbol;
+    @PlainPro({ isClass: true })
+    aliasTypeArguments?: Type[];
 }
 // visit\(visitor: Visitor, context\?: any\) \{ \}
 export interface Visitor {
+    visitNoneSymbol(node: NoneSymbol, context?: any): any;
+    visitFunctionScopedVariableSymbol(node: FunctionScopedVariableSymbol, context?: any): any;
+    visitBlockScopedVariableSymbol(node: BlockScopedVariableSymbol, context?: any): any;
+    visitPropertySymbol(node: PropertySymbol, context?: any): any;
+    visitEnumMemberSymbol(node: EnumMemberSymbol, context?: any): any;
+    visitFunctionSymbol(node: FunctionSymbol, context?: any): any;
+    visitClassSymbol(node: ClassSymbol, context?: any): any;
+    visitInterfaceSymbol(node: InterfaceSymbol, context?: any): any;
+    visitConstEnumSymbol(node: ConstEnumSymbol, context?: any): any;
+    visitRegularEnumSymbol(node: RegularEnumSymbol, context?: any): any;
+    visitValueModuleSymbol(node: ValueModuleSymbol, context?: any): any;
+    visitNamespaceModuleSymbol(node: NamespaceModuleSymbol, context?: any): any;
+    visitTypeLiteralSymbol(node: TypeLiteralSymbol, context?: any): any;
+    visitObjectLiteralSymbol(node: ObjectLiteralSymbol, context?: any): any;
+    visitMethodSymbol(node: MethodSymbol, context?: any): any;
+    visitConstructorSymbol(node: ConstructorSymbol, context?: any): any;
+    visitGetAccessorSymbol(node: GetAccessorSymbol, context?: any): any;
+    visitSetAccessorSymbol(node: SetAccessorSymbol, context?: any): any;
+    visitSignatureSymbol(node: SignatureSymbol, context?: any): any;
+    visitTypeParameterSymbol(node: TypeParameterSymbol, context?: any): any;
+    visitTypeAliasSymbol(node: TypeAliasSymbol, context?: any): any;
+    visitExportValueSymbol(node: ExportValueSymbol, context?: any): any;
+    visitAliasSymbol(node: AliasSymbol, context?: any): any;
+    visitPrototypeSymbol(node: PrototypeSymbol, context?: any): any;
+    visitExportStarSymbol(node: ExportStarSymbol, context?: any): any;
+    visitOptionalSymbol(node: OptionalSymbol, context?: any): any;
+    visitTransientSymbol(node: TransientSymbol, context?: any): any;
+    visitAssignmentSymbol(node: AssignmentSymbol, context?: any): any;
+    visitModuleExportsSymbol(node: ModuleExportsSymbol, context?: any): any;
+    visitEnumSymbol(node: EnumSymbol, context?: any): any;
+    visitVariableSymbol(node: VariableSymbol, context?: any): any;
+    visitValueSymbol(node: ValueSymbol, context?: any): any;
+    visitTypeSymbol(node: TypeSymbol, context?: any): any;
+    visitNamespaceSymbol(node: NamespaceSymbol, context?: any): any;
+    visitModuleSymbol(node: ModuleSymbol, context?: any): any;
+    visitAccessorSymbol(node: AccessorSymbol, context?: any): any;
+    visitFunctionScopedVariableExcludesSymbol(node: FunctionScopedVariableExcludesSymbol, context?: any): any;
+    visitBlockScopedVariableExcludesSymbol(node: BlockScopedVariableExcludesSymbol, context?: any): any;
+    visitParameterExcludesSymbol(node: ParameterExcludesSymbol, context?: any): any;
+    visitPropertyExcludesSymbol(node: PropertyExcludesSymbol, context?: any): any;
+    visitEnumMemberExcludesSymbol(node: EnumMemberExcludesSymbol, context?: any): any;
+    visitFunctionExcludesSymbol(node: FunctionExcludesSymbol, context?: any): any;
+    visitClassExcludesSymbol(node: ClassExcludesSymbol, context?: any): any;
+    visitInterfaceExcludesSymbol(node: InterfaceExcludesSymbol, context?: any): any;
+    visitRegularEnumExcludesSymbol(node: RegularEnumExcludesSymbol, context?: any): any;
+    visitConstEnumExcludesSymbol(node: ConstEnumExcludesSymbol, context?: any): any;
+    visitValueModuleExcludesSymbol(node: ValueModuleExcludesSymbol, context?: any): any;
+    visitNamespaceModuleExcludesSymbol(node: NamespaceModuleExcludesSymbol, context?: any): any;
+    visitMethodExcludesSymbol(node: MethodExcludesSymbol, context?: any): any;
+    visitGetAccessorExcludesSymbol(node: GetAccessorExcludesSymbol, context?: any): any;
+    visitSetAccessorExcludesSymbol(node: SetAccessorExcludesSymbol, context?: any): any;
+    visitTypeParameterExcludesSymbol(node: TypeParameterExcludesSymbol, context?: any): any;
+    visitTypeAliasExcludesSymbol(node: TypeAliasExcludesSymbol, context?: any): any;
+    visitAliasExcludesSymbol(node: AliasExcludesSymbol, context?: any): any;
+    visitModuleMemberSymbol(node: ModuleMemberSymbol, context?: any): any;
+    visitExportHasLocalSymbol(node: ExportHasLocalSymbol, context?: any): any;
+    visitBlockScopedSymbol(node: BlockScopedSymbol, context?: any): any;
+    visitPropertyOrAccessorSymbol(node: PropertyOrAccessorSymbol, context?: any): any;
+    visitClassMemberSymbol(node: ClassMemberSymbol, context?: any): any;
+    visitConditionalTypeNode(node: ConditionalTypeNode, context: any): any;
+    visitInferTypeNode(node: InferTypeNode, context: any): any;
+    visitUnionTypeNode(node: UnionTypeNode, context: any): any;
+    visitIntersectionTypeNode(node: IntersectionTypeNode, context: any): any;
+    visitIndexedAccessTypeNode(node: IndexedAccessTypeNode, context: any): any;
+    visitRegularExpressionLiteral(node: RegularExpressionLiteral, context: any): any;
+    visitLiteralTypeNode(node: LiteralTypeNode, context: any): any;
+    visitTypeQueryNode(node: TypeQueryNode, context: any): any;
+    visitJSDocAllType(node: JSDocAllType, context: any): any;
+    visitJSDocUnknownType(node: JSDocUnknownType, context: any): any;
+    visitJSDocNamepathType(node: JSDocNamepathType, context: any): any;
+    visitArrayTypeNode(node: ArrayTypeNode, context: any): any;
+    visitTupleTypeNode(node: TupleTypeNode, context: any): any;
+    visitOptionalTypeNode(node: OptionalTypeNode, context: any): any;
+    visitRestTypeNode(node: RestTypeNode, context: any): any;
+    visitModifier(node: Modifier, context?: any): any;
     visitJSDocThisTag(node: JSDocThisTag, context?: any): any;
     visitJSDocTypeTag(node: JSDocTypeTag, context?: any): any;
     visitJSDocUnknownTag(node: JSDocUnknownTag, context?: any): any;

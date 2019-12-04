@@ -1,6 +1,15 @@
 import * as ast from '@nger/ast_ts';
-import { CompilerContext } from './compiler'
-export class CompilerVisitor implements ast.Visitor {
+import * as graphql from '@nger/ast.graphql';
+import { CompilerContext } from './compiler';
+import { join, dirname, extname } from 'path';
+import * as ts from 'typescript';
+import { existsSync } from 'fs';
+import { hasModuleDecorator } from './handlers/mdoule.handler';
+
+export class TsGraphqlContext {
+    graphql: graphql.DocumentNode = new graphql.DocumentNode();
+}
+export class TsGraphqlVisitor implements ast.Visitor {
     visitNoneSymbol(node: ast.NoneSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
@@ -74,7 +83,8 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitExportStarSymbol(node: ast.ExportStarSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+        const { } = node.toJson(this, context);
+        debugger;
     }
     visitOptionalSymbol(node: ast.OptionalSymbol, context?: any) {
         throw new Error("Method not implemented.");
@@ -185,7 +195,8 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitUnionTypeNode(node: ast.UnionTypeNode, context: any) {
-        throw new Error("Method not implemented.");
+        const { types } = node.toJson(this, context);
+        return types;
     }
     visitIntersectionTypeNode(node: ast.IntersectionTypeNode, context: any) {
         throw new Error("Method not implemented.");
@@ -212,7 +223,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitArrayTypeNode(node: ast.ArrayTypeNode, context: any) {
-        throw new Error("Method not implemented.");
+        const { elementType } = node.toJson(this, context);
     }
     visitTupleTypeNode(node: ast.TupleTypeNode, context: any) {
         throw new Error("Method not implemented.");
@@ -223,11 +234,33 @@ export class CompilerVisitor implements ast.Visitor {
     visitRestTypeNode(node: ast.RestTypeNode, context: any) {
         throw new Error("Method not implemented.");
     }
-    visit(node?: ast.Node, context?: CompilerContext): any {
-        return node && node.toJson(this, context);
-    }
-    visits(nodes?: ast.Node[], context?: any): any {
-        return nodes && nodes.map(node => node.visit(this, context))
+    visitModifier(node: ast.Modifier, context?: any) {
+        const { kind } = node;
+        switch (kind) {
+            case ts.SyntaxKind.AbstractKeyword:
+                return `abstract`
+            case ts.SyntaxKind.AsyncKeyword:
+                return `async`
+            case ts.SyntaxKind.ConstKeyword:
+                return `const`
+            case ts.SyntaxKind.DeclareKeyword:
+                return `declare`
+            case ts.SyntaxKind.DefaultKeyword:
+                return `default`
+            case ts.SyntaxKind.ExportKeyword:
+                return `export`
+            case ts.SyntaxKind.PublicKeyword:
+                return `public`
+            case ts.SyntaxKind.PrivateKeyword:
+                return `private`
+            case ts.SyntaxKind.ProtectedKeyword:
+                return `protected`
+            case ts.SyntaxKind.ReadonlyKeyword:
+                return `readonly`
+            case ts.SyntaxKind.StaticKeyword:
+                return `static`
+        }
+        return;
     }
     visitJSDocThisTag(node: ast.JSDocThisTag, context?: any) {
         throw new Error("Method not implemented.");
@@ -257,7 +290,29 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitMethodDeclaration(node: ast.MethodDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+        let { name, type, jsDoc, typeParameters, decorators, modifiers, parameters, asteriskToken, questionToken, exclamationToken } = node.toJson(this, context, 'body');
+        if (modifiers) {
+            if (['private', 'protected', 'static'].some(it => modifiers.includes(it))) {
+                return;
+            }
+        }
+        const needDecorators = ['Query', 'Mutation', 'Subscription'];
+        if (decorators && decorators.map((it: any) => it.name.value).some((it: any) => needDecorators.includes(it))) {
+            const ast = new graphql.FieldDefinitionNode()
+            ast.name = name;
+            ast.arguments = parameters;
+            ast.directives = decorators.filter((it: any) => !!it).filter((it: any) => !needDecorators.includes(it.name.value));
+            ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+            if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
+            return ast;
+        }
+    }
+    mergeJsDoc(jsDoc: graphql.StringValueNode[]) {
+        const val = jsDoc.filter(it => it instanceof graphql.StringValueNode).map(it => it.value).join(`\n`);
+        const ast = new graphql.StringValueNode(val)
+        ast.value = ast.value || '';
+        ast.block = true;
+        return ast;
     }
     visitTaggedTemplateExpression(node: ast.TaggedTemplateExpression, context?: any) {
         throw new Error("Method not implemented.");
@@ -269,7 +324,11 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitPropertyAssignment(node: ast.PropertyAssignment, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, questionToken, initializer } = node.toJson(this, context);
+        const file = new graphql.ObjectFieldNode();
+        file.name = name;
+        file.value = initializer;
+        return file;
     }
     visitShorthandPropertyAssignment(node: ast.ShorthandPropertyAssignment, context?: any) {
         throw new Error("Method not implemented.");
@@ -296,11 +355,12 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitNamedImports(node: ast.NamedImports, context?: any) {
-        throw new Error("Method not implemented.");
+        const { elements } = node.toJson(this, context);
+        return elements;
     }
-    visitImportSpecifier(node: ast.ImportSpecifier, context?: any) {
-        const { kind, propertyName, name } = this.visit(node, context);
-        return name.escapedText;
+    visitImportSpecifier(node: ast.ImportSpecifier, context: CompilerContext) {
+        const { propertyName, name } = node.toJson(this, context);
+        return propertyName ? propertyName : name;
     }
     visitNamespaceImport(node: ast.NamespaceImport, context?: any) {
         throw new Error("Method not implemented.");
@@ -318,24 +378,28 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitParameterDeclaration(node: ast.ParameterDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+        const { dotDotDotToken, name, questionToken, type, initializer } = node.toJson(this, context);
+        const input = new graphql.InputValueDefinitionNode();
+        input.name = name;
+        input.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+        if (dotDotDotToken) {
+            // throw new Error(`method parameter not support ...`)
+        }
+        return input;
     }
     visitBindingElement(node: ast.BindingElement, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitVariableDeclarationList(node: ast.VariableDeclarationList, context?: any) {
-        throw new Error("Method not implemented.");
+        const { declarations } = node.toJson(this, context);
+        return declarations;
     }
     visitVariableStatement(node: ast.VariableStatement, context?: any) {
-        const { declarationList } = this.visit(node, context);
+        const { declarationList } = node.toJson(this, context);
         return declarationList;
     }
     visitVariableDeclaration(node: ast.VariableDeclaration, context?: any) {
-        const { name, exclamationToken, type, initializer } = this.visit(node, context);
-        debugger;
-    }
-    visitModifier(node: ast.Modifier, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, initializer } = node.toJson(this, context);
     }
     visitDoStatement(node: ast.DoStatement, context?: any) {
         throw new Error("Method not implemented.");
@@ -359,7 +423,8 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitReturnStatement(node: ast.ReturnStatement, context?: any) {
-        throw new Error("Method not implemented.");
+        const { expression } = node.toJson(this, context);
+        return expression;
     }
     visitWithStatement(node: ast.WithStatement, context?: any) {
         throw new Error("Method not implemented.");
@@ -382,11 +447,44 @@ export class CompilerVisitor implements ast.Visitor {
     visitTryStatement(node: ast.TryStatement, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitImportClause(node: ast.ImportClause, context?: any) {
-        throw new Error("Method not implemented.");
+    visitImportClause(node: ast.ImportClause, context?: CompilerContext) {
+        const { name, namedBindings } = node.toJson(this, context);
+        return name ? name : namedBindings;
+    }
+    private transformPath(path: string, context: CompilerContext) {
+        if (path.startsWith('/')) {
+            path = path;
+        } else if (path.startsWith('.')) {
+            path = join(dirname(context.sourceFile.fileName), path)
+        } else {
+            path = require.resolve(path)
+        }
+        const ext = extname(path)
+        if (ext === '.js') {
+            // path = path.replace('.js', '.d.ts')
+        } else {
+            if (existsSync(`${path}.d.ts`)) {
+                // path = `${path}.d.ts`
+            } else if (existsSync(`${path}.ts`)) {
+                path = `${path}.ts`
+            } else if (existsSync(`${path}/index.d.ts`)) {
+                // path = `${path}/index.d.ts`
+            } else if (existsSync(`${path}/index.ts`)) {
+                path = `${path}/index.ts`
+            } else {
+                return path;
+            }
+        }
+        return path;
     }
     visitImportDeclaration(node: ast.ImportDeclaration, context: CompilerContext) {
-        const { importClause, moduleSpecifier } = this.visit(node, context);
+        const { moduleSpecifier, importClause } = node.toJson(this, context);
+        // const sourceFile = context.getSourceFile(this.transformPath(moduleSpecifier.value, context));
+        // if (sourceFile) {
+        //     const ctx = new CompilerContext(context)
+        //     this.visitSourceFile(sourceFile, ctx)
+        //     context.addChildren(moduleSpecifier.value, ctx)
+        // };
     }
     visitModuleBlock(node: ast.ModuleBlock, context?: any) {
         throw new Error("Method not implemented.");
@@ -398,14 +496,16 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitStringLiteral(node: ast.StringLiteral, context?: any) {
-        const { kind, text, isUnterminated, hasExtendedUnicodeEscape } = this.visit(node, context);
-        return text;
+        return new graphql.StringValueNode(node.text)
     }
     visitJsxAttribute(node: ast.JsxAttribute, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitObjectLiteralExpression(node: ast.ObjectLiteralExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        const { properties } = node.toJson(this, context);
+        const obj = new graphql.ObjectValueNode();
+        obj.fields = properties;
+        return obj;
     }
     visitJsxAttributes(node: ast.JsxAttributes, context?: any) {
         throw new Error("Method not implemented.");
@@ -435,7 +535,8 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitArrayLiteralExpression(node: ast.ArrayLiteralExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        const { elements } = node.toJson(this, context);
+        return elements;
     }
     visitParenthesizedExpression(node: ast.ParenthesizedExpression, context?: any) {
         throw new Error("Method not implemented.");
@@ -468,10 +569,16 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitNullLiteral(node: ast.NullLiteral, context?: any) {
-        throw new Error("Method not implemented.");
+        return new graphql.NullValueNode()
     }
     visitBooleanLiteral(node: ast.BooleanLiteral, context?: any) {
-        throw new Error("Method not implemented.");
+        const ast = new graphql.BooleanValueNode();
+        if (node.isTrue()) {
+            ast.value = true;
+        } else {
+            ast.value = false;
+        }
+        return ast;
     }
     visitPartiallyEmittedExpression(node: ast.PartiallyEmittedExpression, context?: any) {
         throw new Error("Method not implemented.");
@@ -495,7 +602,8 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitAwaitExpression(node: ast.AwaitExpression, context?: any) {
-        throw new Error("Method not implemented.");
+        const { expression } = node.toJson(this, context);
+        return expression;
     }
     visitTypeAssertion(node: ast.TypeAssertion, context?: any) {
         throw new Error("Method not implemented.");
@@ -531,22 +639,28 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitPropertyAccessExpression(node: ast.PropertyAccessExpression, context?: any) {
-        debugger;
-    }
-    visitBigIntLiteral(node: ast.BigIntLiteral, context?: any) {
         throw new Error("Method not implemented.");
     }
+    visitBigIntLiteral(node: ast.BigIntLiteral, context?: any) {
+        const ast = new graphql.StringValueNode()
+        ast.value = node.text;
+        return ast;
+    }
     visitNumericLiteral(node: ast.NumericLiteral, context?: any) {
-        return new Number(node.text);
+        const ast = new graphql.IntValueNode()
+        ast.value = node.text;
+        return ast;
     }
     visitSemicolonClassElement(node: ast.SemicolonClassElement, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitHeritageClause(node: ast.HeritageClause, context?: any) {
-        throw new Error("Method not implemented.");
+        const { token, types } = node.toJson(this, context);
+        return { token, types };
     }
     visitExpressionWithTypeArguments(node: ast.ExpressionWithTypeArguments, context?: any) {
-        throw new Error("Method not implemented.");
+        const { expression } = node.toJson(this, context);
+        return expression;
     }
     visitJSDocVariadicType(node: ast.JSDocVariadicType, context?: any) {
         throw new Error("Method not implemented.");
@@ -561,7 +675,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitTypeParameterDeclaration(node: ast.TypeParameterDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, constraint, default: _def, expression } = node.toJson(this, context);
     }
     visitMappedTypeNode(node: ast.MappedTypeNode, context?: any) {
         throw new Error("Method not implemented.");
@@ -576,19 +690,36 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitNamedExports(node: ast.NamedExports, context?: any) {
-        throw new Error("Method not implemented.");
+        const { elements } = node.toJson(this, context);
+        return elements;
     }
-    visitExportDeclaration(node: ast.ExportDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+    visitExportDeclaration(node: ast.ExportDeclaration, context: CompilerContext) {
+        const { exportClause, moduleSpecifier } = node.toJson(this, context);
+        // const sourceFilePath = this.transformPath(moduleSpecifier.value, context)
+        // const sourceFile = context.getSourceFile(sourceFilePath);
+        // if (sourceFile) {
+        //     const ctx = new CompilerContext(context);
+        //     this.visitSourceFile(sourceFile, ctx);
+        //     context.addChildren(moduleSpecifier.value, ctx)
+        // };
     }
-    visitExportSpecifier(node: ast.ExportSpecifier, context?: any) {
-        throw new Error("Method not implemented.");
+    visitExportSpecifier(node: ast.ExportSpecifier, context: CompilerContext) {
+        const exp = context.typeChecker.getExportSpecifierLocalTargetSymbol(node.__node as any)
+        const { name, propertyName } = node.toJson(this, context);
+        let astName = propertyName ? propertyName : name;
+        return {
+            name: astName,
+            exp
+        }
     }
     visitEndOfFileToken(node: ast.EndOfFileToken, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitEnumMember(node: ast.EnumMember, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, initializer } = node.toJson(this, context);
+        const ast = new graphql.EnumValueDefinitionNode();
+        ast.name = name;
+        return ast;
     }
     visitModuleDeclaration(node: ast.ModuleDeclaration, context?: any) {
         throw new Error("Method not implemented.");
@@ -597,14 +728,14 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitFunctionDeclaration(node: ast.FunctionDeclaration, context?: any) {
-        const { name, body, asteriskToken, questionToken, exclamationToken, typeParameters, parameters, type } = this.visit(node, context);
-        debugger;
+        const { name } = node.toJson(this, context);
+        return;
     }
     visitJSDocFunctionType(node: ast.JSDocFunctionType, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitFunctionTypeNode(node: ast.FunctionTypeNode, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, type, typeArguments, parameters } = node.toJson(this, context);
     }
     visitConstructorTypeNode(node: ast.ConstructorTypeNode, context: any) {
         throw new Error("Method not implemented.");
@@ -613,7 +744,7 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitMethodSignature(node: ast.MethodSignature, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, type, parameters, typeParameters, questionToken } = node.toJson(this, context);
     }
     visitConstructSignatureDeclaration(node: ast.ConstructSignatureDeclaration, context?: any) {
         throw new Error("Method not implemented.");
@@ -622,46 +753,94 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitArrowFunction(node: ast.ArrowFunction, context?: any) {
-        throw new Error("Method not implemented.");
+        return () => { };
     }
     visitTypeAliasDeclaration(node: ast.TypeAliasDeclaration, context?: any) {
+        const { name, type, typeParameters } = node.toJson(this, context);
+        const ast = new graphql.UnionTypeDefinitionNode();
+        ast.name = name;
+        ast.types = type;
+        return ast;
+    }
+    visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext) {
+        const { name, members } = node.toJson(this, context);
+        const ast = new graphql.EnumTypeDefinitionNode();
+        ast.name = name;
+        ast.values = members;
+        return ast;
+    }
+    visitPropertyAccessEntityNameExpression(node: ast.PropertyAccessEntityNameExpression, context: CompilerContext) {
+        const { expression, name } = node.toJson(this, context);
+        return name ? name : expression;
+    }
+    visitJSDocSignature(node: ast.JSDocSignature, context: CompilerContext) {
         throw new Error("Method not implemented.");
     }
-    visitEnumDeclaration(node: ast.EnumDeclaration, context?: any) {
+    visitJSDocCallbackTag(node: ast.JSDocCallbackTag, context: CompilerContext) {
         throw new Error("Method not implemented.");
     }
-    visitPropertyAccessEntityNameExpression(node: ast.PropertyAccessEntityNameExpression, context?: any) {
+    visitJSDocTypeExpression(node: ast.JSDocTypeExpression, context: CompilerContext) {
+        const { type } = node.toJson(this, context);
+        return type;
+    }
+    visitJSDocTemplateTag(node: ast.JSDocTemplateTag, context: CompilerContext) {
         throw new Error("Method not implemented.");
     }
-    visitJSDocSignature(node: ast.JSDocSignature, context?: any) {
-        throw new Error("Method not implemented.");
+    visitJSDocParameterTag(node: ast.JSDocParameterTag, context: CompilerContext) {
+        const { name, typeExpression, comment, tagName, isBracketed, isNameFirst } = node.toJson(this, context);
+        const ast = new graphql.NamedTypeNode();
+        ast.name = typeExpression;
+        ast.description = new graphql.StringValueNode(comment);
+        return ast;
     }
-    visitJSDocCallbackTag(node: ast.JSDocCallbackTag, context?: any) {
-        throw new Error("Method not implemented.");
-    }
-    visitJSDocTypeExpression(node: ast.JSDocTypeExpression, context?: any) {
-        throw new Error("Method not implemented.");
-    }
-    visitJSDocTemplateTag(node: ast.JSDocTemplateTag, context?: any) {
-        throw new Error("Method not implemented.");
-    }
-    visitJSDocParameterTag(node: ast.JSDocParameterTag, context?: any) {
-        throw new Error("Method not implemented.");
-    }
-    visitJSDocReturnTag(node: ast.JSDocReturnTag, context?: any) {
-        throw new Error("Method not implemented.");
+    visitJSDocReturnTag(node: ast.JSDocReturnTag, context: CompilerContext) {
+        const { typeExpression, tagName, comment } = node.toJson(this, context);
+        const ast = new graphql.NamedTypeNode();
+        ast.name = new graphql.NameNode(comment);
+        if (tagName) ast.description = new graphql.StringValueNode(tagName);
+        return ast;
     }
     visitClassExpression(node: ast.ClassExpression, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitDecorator(node: ast.Decorator, context?: any) {
-        throw new Error("Method not implemented.");
+    private serializeSymbol(symbol: ts.Symbol, context: CompilerContext): any {
+        return {
+            name: symbol.getName(),
+            documentation: ts.displayPartsToString(symbol.getDocumentationComment(context.typeChecker)),
+            type: context.typeChecker.typeToString(
+                context.typeChecker.getTypeOfSymbolAtLocation(symbol, symbol.valueDeclaration!)
+            )
+        };
+    }
+    private serializeClass(symbol: ts.Symbol, context: CompilerContext) {
+        let details = this.serializeSymbol(symbol, context);
+        let constructorType = context.typeChecker.getTypeOfSymbolAtLocation(
+            symbol,
+            symbol.valueDeclaration!
+        );
+        details.constructors = constructorType
+            .getConstructSignatures()
+            .map((it) => this.serializeSignature(it, context));
+        return details;
+    }
+    serializeSignature(signature: ts.Signature, context: CompilerContext) {
+        return {
+            parameters: signature.parameters.map((it) => this.serializeSymbol(it, context)),
+            returnType: context.typeChecker.typeToString(signature.getReturnType()),
+            documentation: ts.displayPartsToString(signature.getDocumentationComment(context.typeChecker))
+        };
+    }
+    visitDecorator(node: ast.Decorator, context: CompilerContext) {
+        const { expression } = node.toJson(this, context);
+        const directive = new graphql.DirectiveNode();
+        directive.arguments = expression.args;
+        directive.name = expression.expression;
+        return directive;
     }
     visitJSDoc(node: ast.JSDoc, context?: any) {
-        throw new Error("Method not implemented.");
-    }
-    visitJSDocTag(node: ast.JSDocTag, context?: any) {
-        throw new Error("Method not implemented.");
+        const { tags, comment } = node.toJson(this, context);
+        const ast = new graphql.StringValueNode(comment);
+        return [...(tags || []), ast].flat();
     }
     visitJSDocTypeLiteral(node: ast.JSDocTypeLiteral, context?: any) {
         throw new Error("Method not implemented.");
@@ -673,70 +852,195 @@ export class CompilerVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitTypeLiteralNode(node: ast.TypeLiteralNode, context?: any) {
-        throw new Error("Method not implemented.");
+        const { members } = node;
     }
     visitPropertySignature(node: ast.PropertySignature, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name, type, questionToken, initializer, jsDoc } = node.toJson(this, context);
+        const ast = new graphql.FieldDefinitionNode();
+        ast.name = name;
+        ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+        if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
+        return ast;
     }
-    visitInterfaceDeclaration(node: ast.InterfaceDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+    visitInterfaceDeclaration(node: ast.InterfaceDeclaration, context: CompilerContext) {
+        const { members, name, typeParameters, heritageClauses, type, questionToken } = node.toJson(this, context);
+        const ast = new graphql.InterfaceTypeDefinitionNode();
+        ast.name = name;
+        ast.fields = members;
+        if (heritageClauses) {
+            ast.interfaces = [];
+            heritageClauses.map((it: any) => {
+                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
+                    throw new Error(`interface to graphql do not support extends`)
+                }
+            })
+        }
+        return ast;
     }
     visitNoSubstitutionTemplateLiteral(node: ast.NoSubstitutionTemplateLiteral, context?: any) {
-        throw new Error("Method not implemented.");
+        const { text, rawText } = node;
+        return new graphql.StringValueNode(rawText ? rawText : text);
     }
     visitGetAccessorDeclaration(node: ast.GetAccessorDeclaration, context?: any) {
         throw new Error("Method not implemented.");
     }
-
+    visit(node?: ast.Node | undefined, context?: any): any {
+        return node && node.visit(this, context)
+    }
+    visits(nodes?: ast.Node[] | undefined, context?: any) {
+        return nodes ? nodes.map(it => this.visit(it, context)) : [];
+    }
     visitSourceFile(node: ast.SourceFile, context: CompilerContext) {
-        const _context = new CompilerContext(context);
-        _context.setSourceFile(node)
-        node.statements.map(it => this.visit(it, _context));
+        context.setSourceFile(node);
+        node.statements.filter(it => {
+            if (it instanceof ast.ExpressionStatement) {
+                it.visit(this, context)
+            }
+        });
     }
-    visitClassDeclaration(node: ast.ClassDeclaration, context: CompilerContext) {
-        node.members.map(member => this.visit(member, context))
-    }
-    visitPropertyDeclaration(node: ast.PropertyDeclaration, context: CompilerContext): any {
-        const { type, name } = node;
-        if (type) {
-            if (type instanceof ast.TypeReferenceNode) {
-                const name = this.visit(type.typeName, context);
-                const typeArguments = this.visits(type.typeArguments, context)
+    visitClassDeclaration(node: ast.ClassDeclaration, context?: any) {
+        // class 转 type
+        const { modifiers, name, members, decorators, heritageClauses } = node.toJson(this, context);
+        if (hasModuleDecorator(decorators)) {
+            
+        }
+        if (Array.isArray(decorators)) {
+
+            const moduleDecorator = decorators.find(it => it && it.name.value === 'Module')
+            if (['Module'].some(key => decorators.filter(it => !!it).map((it: any) => it.name.value).includes(key))) {
+                // 解析Module
+                debugger;
+            }
+            const scalarDecorator = decorators.filter(it => !!it).find(it => it.name.value === 'Scalar');
+            if (scalarDecorator) {
+                const scalar = new graphql.ScalarTypeDefinitionNode();
+                const args = scalarDecorator.arguments.find((it: any) => it.name.value === 'name')
+                if (args) {
+                    scalar.name = new graphql.NameNode(args.value.value);
+                }
+                return scalar;
+            }
+        }
+        if (Array.isArray(decorators)) {
+            const needDecorators = ['Controller', 'Magnus'];
+            if (needDecorators.some(key => decorators.filter(it => !!it).map((it: any) => it.name.value).includes(key))) {
+                const ast = new graphql.ObjectTypeDefinitionNode();
+                ast.name = name;
+                ast.fields = members;
+                ast.directives = decorators.filter((it: any) => !!it).filter(it => !needDecorators.some(key => it.name.value === key));
+                if (modifiers.includes('export')) {
+                    context.setExport(name.value, node)
+                }
+                if (heritageClauses) {
+                    ast.interfaces = [];
+                    heritageClauses.map((it: any) => {
+                        if (it.token === ts.SyntaxKind.ImplementsKeyword) {
+                            it.types.map((type: any) => {
+                                if (Array.isArray(ast.interfaces)) {
+                                    ast.interfaces.push(type)
+                                }
+                            })
+                        }
+                    })
+                }
+                return ast;
             }
         }
     }
+    visitPropertyDeclaration(node: ast.PropertyDeclaration, context?: any) {
+        let { modifiers, name, decorators, questionToken, jsDoc, exclamationToken, type, initializer } = node.toJson(this, context);
+        if (modifiers) {
+            if (['private', 'protected', 'static'].some(it => modifiers.includes(it))) {
+                return;
+            }
+        }
+        const ast = new graphql.FieldDefinitionNode();
+        ast.name = name;
+        ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+        ast.directives = decorators;
+        if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
+        return ast;
+    }
+    visitTypeReferenceNode(node: ast.TypeReferenceNode, context?: any) {
+        const { typeName, typeArguments } = node.toJson(this, context);
+        const ast = new graphql.NamedTypeNode();
+        if (typeName) {
+            if (typeName.value === 'Promise') {
+                ast.name = typeArguments[0]
+            } else if (typeName.value === 'AsyncIterator') {
+                ast.name = typeArguments[0]
+            } else if (typeName.value === 'Observable') {
+                ast.name = typeArguments[0]
+            } else {
+                ast.name = typeName;
+            }
+        }
+        return ast;
+    }
+    visitQualifiedName(node: ast.QualifiedName, context?: any) {
+        throw new Error("Method not implemented.");
+    }
     visitIdentifier(node: ast.Identifier, context: CompilerContext) {
-        const { escapedText, originalKeywordKind, isInJSDocNamespace } = node;
-        return escapedText;
+        const ast = new graphql.NameNode();
+        ast.__type = context.typeChecker.getTypeAtLocation(node.__node);
+        ast.__node = node.__node;
+        ast.value = node.escapedText;
+        return ast;
     }
-    visitQualifiedName(node: ast.QualifiedName, context: CompilerContext) {
-        debugger;
+    visitKeywordTypeNode(node: ast.KeywordTypeNode, context?: any) {
+        const { keyword } = node;
+        const ast = new graphql.NameNode();
+        switch (keyword) {
+            case 'string':
+                ast.value = 'String';
+                break;
+            case 'any':
+                ast.value = 'Json';
+                break;
+            case 'number':
+                ast.value = 'Int';
+                break;
+            case 'void':
+                ast.value = 'Void';
+                break;
+            default:
+                debugger;
+                return ast.value = `Json`;
+        }
+        return ast;
     }
-    visitTypeReferenceNode(node: ast.TypeReferenceNode, context: CompilerContext) {
-        debugger;
+    visitConstructorDeclaration(node: ast.ConstructorDeclaration, context?: any) {
+        const { } = node.toJson(this, context, 'body');
     }
-    visitKeywordTypeNode(node: ast.KeywordTypeNode, context?: CompilerContext): any {
-        return node.keyword;
-    }
-    visitConstructorDeclaration(node: ast.ConstructorDeclaration, context?: CompilerContext) {
-        debugger;
-    }
-    visitExpressionStatement(node: ast.ExpressionStatement, context: CompilerContext): any {
-        this.visit(node.expression, context);
+    visitExpressionStatement(node: ast.ExpressionStatement, context?: any) {
+        const { expression } = node.toJson(this, context);
+        return expression;
     }
     visitCallExpression(node: ast.CallExpression, context: CompilerContext) {
-        this.visit(node.expression, context)
+        const { expression, arguments: args } = node.toJson(this, context);
+        const type = expression.__type;
+        const ast = context.create(type.symbol.valueDeclaration);
+        // call expression
+        if (args) {
+            args.map((arg: any) => {
+                if (arg.__type) {
+                    const type = arg.__type;
+                    const ast = context.create(type.symbol.valueDeclaration);
+                    if (ast) ast.visit(this, context)
+                }
+            })
+        }
+        if (ast) ast.visit(this, context);
+        return { expression, args };
     }
-    visitBlock(node: ast.Block, context: CompilerContext) {
-        node.statements.map(it => this.visit(it, context))
+    visitBlock(node: ast.Block, context?: any) {
+        const { statements } = node.toJson(this, context);
+        return statements;
     }
-    visitJSDocOptionalType(node: ast.JSDocOptionalType, context: CompilerContext) {
-        debugger;
+    visitJSDocOptionalType(node: ast.JSDocOptionalType, context?: any) {
+        throw new Error("Method not implemented.");
     }
-    visitExportAssignment(node: ast.ExportAssignment, context: CompilerContext) {
-        debugger;
+    visitExportAssignment(node: ast.ExportAssignment, context?: any) {
+        throw new Error("Method not implemented.");
     }
 }
-export * from './compiler';
-export * from './toString';
-export * from './ts-graphql';
