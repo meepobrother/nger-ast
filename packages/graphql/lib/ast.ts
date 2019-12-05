@@ -1,6 +1,7 @@
 import { Source } from './source';
 import { TokenKindEnum } from './tokenKind';
 import { Plain, PlainPro } from '@nger/plain';
+import * as ts from 'typescript';
 export class Token {
     kind: TokenKindEnum;
     start: number;
@@ -135,7 +136,7 @@ export interface ASTKindToNode {
 }
 export abstract class Node {
     __node: any;
-    __type: any;
+    __type: ts.Type;
     description?: StringValueNode;
     abstract visit(visitor: Visitor, context?: any): any;
     abstract toJson(visitor: Visitor, context?: any): any;

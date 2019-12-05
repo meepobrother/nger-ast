@@ -4,12 +4,13 @@ import { CompilerContext } from './compiler';
 import { join, dirname, extname } from 'path';
 import * as ts from 'typescript';
 import { existsSync } from 'fs';
-import { hasModuleDecorator } from './handlers/mdoule.handler';
+import { DecoratorVisitor } from './interfaces/decorator';
 
 export class TsGraphqlContext {
     graphql: graphql.DocumentNode = new graphql.DocumentNode();
 }
 export class TsGraphqlVisitor implements ast.Visitor {
+    constructor(public handler: DecoratorVisitor) { }
     visitNoneSymbol(node: ast.NoneSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
@@ -19,8 +20,8 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitBlockScopedVariableSymbol(node: ast.BlockScopedVariableSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitPropertySymbol(node: ast.PropertySymbol, context?: any) {
-        throw new Error("Method not implemented.");
+    visitPropertySymbol(node: ast.PropertySymbol, context?: any): any {
+        return node.valueDeclaration.visit(this, context)
     }
     visitEnumMemberSymbol(node: ast.EnumMemberSymbol, context?: any) {
         throw new Error("Method not implemented.");
@@ -29,16 +30,35 @@ export class TsGraphqlVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitClassSymbol(node: ast.ClassSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+        const { valueDeclaration } = node;
+        valueDeclaration.visit(this, context)
     }
-    visitInterfaceSymbol(node: ast.InterfaceSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+    visitInterfaceSymbol(node: ast.InterfaceSymbol, context: CompilerContext): any {
+        const { declarations } = node;
+        if (declarations.length > 0) {
+            return declarations[0].visit(this, context)
+        }
+        const { name, members } = node.toJson(this, context);
+        const inter = new graphql.InterfaceTypeDefinitionNode();
+        inter.name = new graphql.NameNode(name);
+        const fields: any[] = [];
+        debugger;
+        members && members.forEach((it: any) => {
+            const symbol = context.create(it);
+            if (symbol && typeof symbol.visit === 'function') {
+                const ast = symbol.visit(this, context);
+                if (ast) fields.push(ast);
+            }
+        });
+        inter.fields = fields;
+        context.setStatements([inter])
     }
     visitConstEnumSymbol(node: ast.ConstEnumSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitRegularEnumSymbol(node: ast.RegularEnumSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+    visitRegularEnumSymbol(node: ast.RegularEnumSymbol, context?: any): any {
+        const { valueDeclaration } = node;
+        return valueDeclaration.visit(this, context)
     }
     visitValueModuleSymbol(node: ast.ValueModuleSymbol, context?: any) {
         throw new Error("Method not implemented.");
@@ -47,13 +67,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitTypeLiteralSymbol(node: ast.TypeLiteralSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+        const { members, name } = node;
     }
     visitObjectLiteralSymbol(node: ast.ObjectLiteralSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitMethodSymbol(node: ast.MethodSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+    visitMethodSymbol(node: ast.MethodSymbol, context?: any): any {
+        const { valueDeclaration } = node;
+        return valueDeclaration.visit(this, context)
     }
     visitConstructorSymbol(node: ast.ConstructorSymbol, context?: any) {
         throw new Error("Method not implemented.");
@@ -65,13 +86,19 @@ export class TsGraphqlVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitSignatureSymbol(node: ast.SignatureSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name } = node;
+        return name;
     }
     visitTypeParameterSymbol(node: ast.TypeParameterSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+        const { name } = node;
+        debugger;
+        return name;
     }
-    visitTypeAliasSymbol(node: ast.TypeAliasSymbol, context?: any) {
-        throw new Error("Method not implemented.");
+    visitTypeAliasSymbol(node: ast.TypeAliasSymbol, context: CompilerContext): any {
+        const { name, declarations } = node;
+        if (declarations.length > 0) {
+            return declarations[0].visit(this, context)
+        }
     }
     visitExportValueSymbol(node: ast.ExportValueSymbol, context?: any) {
         throw new Error("Method not implemented.");
@@ -194,9 +221,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitInferTypeNode(node: ast.InferTypeNode, context: any) {
         throw new Error("Method not implemented.");
     }
-    visitUnionTypeNode(node: ast.UnionTypeNode, context: any) {
-        const { types } = node.toJson(this, context);
-        return types;
+    visitUnionTypeNode(node: ast.UnionTypeNode, context: CompilerContext) {
+        const { types, name } = node.toJson(this, context);
+        // 没有名字
+        return types.map((it: any) => this.createGraphqlNamedTypeNode(it));
     }
     visitIntersectionTypeNode(node: ast.IntersectionTypeNode, context: any) {
         throw new Error("Method not implemented.");
@@ -297,14 +325,77 @@ export class TsGraphqlVisitor implements ast.Visitor {
             }
         }
         const needDecorators = ['Query', 'Mutation', 'Subscription'];
-        if (decorators && decorators.map((it: any) => it.name.value).some((it: any) => needDecorators.includes(it))) {
+        let _current: any;
+        const needCreate = decorators && decorators.map((it: any) => it.name.value).some((it: any) => {
+            if (needDecorators.includes(it)) {
+                _current = it;
+                return true;
+            }
+            return false;
+        })
+        if (needCreate && _current) {
             const ast = new graphql.FieldDefinitionNode()
             ast.name = name;
+            parameters = parameters.map((parameter: any) => {
+                const { type } = parameter;
+                const typeNamed = this.getGraphqlNamedTypeName(type);
+                if (typeNamed) {
+                    const graphqlInput = this.createGraphqlInput(typeNamed, context)
+                    if (graphqlInput) {
+                        const named = new graphql.NamedTypeNode();
+                        named.name = graphqlInput.name;
+                        parameter.type = named;
+                        context.setStatements([graphqlInput])
+                    }
+                };
+                return parameter;
+            });
             ast.arguments = parameters;
-            ast.directives = decorators.filter((it: any) => !!it).filter((it: any) => !needDecorators.includes(it.name.value));
             ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+            const graphqlType = this.createGraphqlType(type, context);
+            if (graphqlType) {
+                context.setStatements([graphqlType])
+            }
             if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
-            return ast;
+            if (_current === 'Query') {
+                context.addQuery(ast);
+            } else if (_current === 'Mutation') {
+                context.addMutation(ast)
+            } else if (_current === 'Subscription') {
+                context.addSubscription(ast);
+            } else {
+                return ast;
+            }
+        }
+    }
+    private createGraphqlType(node: graphql.NamedTypeNode, context: CompilerContext) {
+        const type = this.createGraphqlNamedTypeNode(node);
+        if (type.name) {
+            if (type.name.__type) {
+                const __type = type.name.__type;
+                const ast = context.create(__type.aliasSymbol || __type.symbol);
+                if (ast) {
+                    const res = ast.visit(this, context);
+                    if (res instanceof graphql.InterfaceTypeDefinitionNode) {
+                        return this.handler.interfaceTypeDefinitionNodeToObjectTypeDefinitionNode(res)
+                    }
+                }
+            }
+        }
+    }
+    private createGraphqlInput(node: graphql.NamedTypeNode | graphql.NameNode, context: CompilerContext) {
+        const type = this.createGraphqlNamedTypeNode(node);
+        if (type.name) {
+            if (type.name.__type) {
+                const __type = type.name.__type;
+                const ast = context.create(__type.aliasSymbol || __type.symbol);
+                if (ast && typeof ast.visit === 'function') {
+                    const res = ast.visit(this, context);
+                    if (res instanceof graphql.InterfaceTypeDefinitionNode) {
+                        return this.handler.interfaceTypeDefinitionNodeToInputObjectTypeDefinitionNode(res)
+                    }
+                }
+            }
         }
     }
     mergeJsDoc(jsDoc: graphql.StringValueNode[]) {
@@ -369,7 +460,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitComputedPropertyName(node: ast.ComputedPropertyName, context?: any) {
-        throw new Error("Method not implemented.");
+        const { } = node;
     }
     visitObjectBindingPattern(node: ast.ObjectBindingPattern, context?: any) {
         throw new Error("Method not implemented.");
@@ -382,6 +473,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const input = new graphql.InputValueDefinitionNode();
         input.name = name;
         input.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+        // const graphqlInput = this.createGraphqlInput(type, context);
+        // if (graphqlInput) {
+        //     context.setStatements([graphqlInput])
+        // }
         if (dotDotDotToken) {
             // throw new Error(`method parameter not support ...`)
         }
@@ -684,7 +779,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitThisTypeNode(node: ast.ThisTypeNode, context?: any) {
-        throw new Error("Method not implemented.");
+        const { } = node;
     }
     visitExternalModuleReference(node: ast.ExternalModuleReference, context?: any) {
         throw new Error("Method not implemented.");
@@ -747,7 +842,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const { name, type, parameters, typeParameters, questionToken } = node.toJson(this, context);
     }
     visitConstructSignatureDeclaration(node: ast.ConstructSignatureDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+        const { } = node;
     }
     visitCallSignatureDeclaration(node: ast.CallSignatureDeclaration, context?: any) {
         throw new Error("Method not implemented.");
@@ -755,19 +850,19 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitArrowFunction(node: ast.ArrowFunction, context?: any) {
         return () => { };
     }
-    visitTypeAliasDeclaration(node: ast.TypeAliasDeclaration, context?: any) {
+    visitTypeAliasDeclaration(node: ast.TypeAliasDeclaration, context: CompilerContext) {
         const { name, type, typeParameters } = node.toJson(this, context);
         const ast = new graphql.UnionTypeDefinitionNode();
         ast.name = name;
         ast.types = type;
+        if (Array.isArray(type)) {
+            type.map(it => this.checkNamedType(it, context))
+        }
+        context.setStatements([ast]);
         return ast;
     }
-    visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext) {
-        const { name, members } = node.toJson(this, context);
-        const ast = new graphql.EnumTypeDefinitionNode();
-        ast.name = name;
-        ast.values = members;
-        return ast;
+    visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext): any {
+        return this.handler.Enum(node, this, context)
     }
     visitPropertyAccessEntityNameExpression(node: ast.PropertyAccessEntityNameExpression, context: CompilerContext) {
         const { expression, name } = node.toJson(this, context);
@@ -856,26 +951,21 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     visitPropertySignature(node: ast.PropertySignature, context?: any) {
         const { name, type, questionToken, initializer, jsDoc } = node.toJson(this, context);
-        const ast = new graphql.FieldDefinitionNode();
-        ast.name = name;
-        ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
-        if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
-        return ast;
-    }
-    visitInterfaceDeclaration(node: ast.InterfaceDeclaration, context: CompilerContext) {
-        const { members, name, typeParameters, heritageClauses, type, questionToken } = node.toJson(this, context);
-        const ast = new graphql.InterfaceTypeDefinitionNode();
-        ast.name = name;
-        ast.fields = members;
-        if (heritageClauses) {
-            ast.interfaces = [];
-            heritageClauses.map((it: any) => {
-                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
-                    throw new Error(`interface to graphql do not support extends`)
+        if (type) {
+            const ast = new graphql.FieldDefinitionNode();
+            ast.name = name;
+            ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+            if (type.name) {
+                if (type.name.__type) {
+                    const res = this.handler.handlerType(type.name.__type, this, context)
                 }
-            })
+            }
+            if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
+            return ast;
         }
-        return ast;
+    }
+    visitInterfaceDeclaration(node: ast.InterfaceDeclaration, context: CompilerContext): any {
+        return this.handler.Interface(node, this, context);
     }
     visitNoSubstitutionTemplateLiteral(node: ast.NoSubstitutionTemplateLiteral, context?: any) {
         const { text, rawText } = node;
@@ -900,51 +990,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     visitClassDeclaration(node: ast.ClassDeclaration, context?: any) {
         // class 转 type
-        const { modifiers, name, members, decorators, heritageClauses } = node.toJson(this, context);
-        if (hasModuleDecorator(decorators)) {
-            
-        }
+        const { decorators } = node.toJson(this, context);
         if (Array.isArray(decorators)) {
-
-            const moduleDecorator = decorators.find(it => it && it.name.value === 'Module')
-            if (['Module'].some(key => decorators.filter(it => !!it).map((it: any) => it.name.value).includes(key))) {
-                // 解析Module
-                debugger;
-            }
-            const scalarDecorator = decorators.filter(it => !!it).find(it => it.name.value === 'Scalar');
-            if (scalarDecorator) {
-                const scalar = new graphql.ScalarTypeDefinitionNode();
-                const args = scalarDecorator.arguments.find((it: any) => it.name.value === 'name')
-                if (args) {
-                    scalar.name = new graphql.NameNode(args.value.value);
+            decorators.map((decorator: graphql.DirectiveNode) => {
+                const handler = Reflect.get(this.handler, decorator.name.value);
+                if (handler) {
+                    return handler.bind(this.handler)(node, this, context, decorator)
                 }
-                return scalar;
-            }
-        }
-        if (Array.isArray(decorators)) {
-            const needDecorators = ['Controller', 'Magnus'];
-            if (needDecorators.some(key => decorators.filter(it => !!it).map((it: any) => it.name.value).includes(key))) {
-                const ast = new graphql.ObjectTypeDefinitionNode();
-                ast.name = name;
-                ast.fields = members;
-                ast.directives = decorators.filter((it: any) => !!it).filter(it => !needDecorators.some(key => it.name.value === key));
-                if (modifiers.includes('export')) {
-                    context.setExport(name.value, node)
-                }
-                if (heritageClauses) {
-                    ast.interfaces = [];
-                    heritageClauses.map((it: any) => {
-                        if (it.token === ts.SyntaxKind.ImplementsKeyword) {
-                            it.types.map((type: any) => {
-                                if (Array.isArray(ast.interfaces)) {
-                                    ast.interfaces.push(type)
-                                }
-                            })
-                        }
-                    })
-                }
-                return ast;
-            }
+            })
         }
     }
     visitPropertyDeclaration(node: ast.PropertyDeclaration, context?: any) {
@@ -957,25 +1010,53 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const ast = new graphql.FieldDefinitionNode();
         ast.name = name;
         ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
-        ast.directives = decorators;
+        this.checkNamedType(type, context)
         if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
         return ast;
     }
     visitTypeReferenceNode(node: ast.TypeReferenceNode, context?: any) {
         const { typeName, typeArguments } = node.toJson(this, context);
         const ast = new graphql.NamedTypeNode();
+        ast.name = typeName;
         if (typeName) {
-            if (typeName.value === 'Promise') {
-                ast.name = typeArguments[0]
-            } else if (typeName.value === 'AsyncIterator') {
-                ast.name = typeArguments[0]
-            } else if (typeName.value === 'Observable') {
-                ast.name = typeArguments[0]
-            } else {
-                ast.name = typeName;
+            if (typeArguments && typeArguments.length > 0 && ['Promise', 'AsyncIterator', 'Observable'].includes(typeName.value)) {
+                ast.name = this.getGraphqlNamedTypeName(typeArguments[0])
             }
         }
         return ast;
+    }
+    checkNamedType(node: any, context: CompilerContext) {
+        const type = this.createGraphqlNamedTypeNode(node);
+        if (type.name) {
+            if (type.name.__type) {
+                return this.handler.handlerType(type.name.__type, this, context)
+            }
+        }
+    }
+    getGraphqlNamedTypeName(node: graphql.NamedTypeNode | graphql.NameNode | graphql.NonNullTypeNode | graphql.ListTypeNode): graphql.NameNode {
+        if (node instanceof graphql.NamedTypeNode) {
+            return this.getGraphqlNamedTypeName(node.name);
+        } else if (node instanceof graphql.NameNode) {
+            return node;
+        } else if (node instanceof graphql.NonNullTypeNode) {
+            return this.getGraphqlNamedTypeName(node.type)
+        } else if (node instanceof graphql.ListTypeNode) {
+            return this.getGraphqlNamedTypeName(node.type)
+        } else {
+            return new graphql.NameNode(`Undefined`);
+        }
+    }
+    createGraphqlNamedTypeNode(node: graphql.NameNode | graphql.NamedTypeNode) {
+        if (node instanceof graphql.NamedTypeNode) {
+            const name = this.getGraphqlNamedTypeName(node);
+            const ast = new graphql.NamedTypeNode()
+            ast.name = name;
+            return ast;
+        } else {
+            const ast = new graphql.NamedTypeNode()
+            ast.name = node;
+            return ast;
+        }
     }
     visitQualifiedName(node: ast.QualifiedName, context?: any) {
         throw new Error("Method not implemented.");
@@ -1003,8 +1084,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
             case 'void':
                 ast.value = 'Void';
                 break;
+            case 'boolean':
+                ast.value = 'Boolean';
+                break;
             default:
-                debugger;
                 return ast.value = `Json`;
         }
         return ast;

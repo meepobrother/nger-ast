@@ -1,34 +1,34 @@
 import { Query, Mutation, Subscription, Scalar } from '@nestjs/graphql';
 import { Controller } from '@nestjs/common';
-export function Demo(name: string): PropertyDecorator {
-    return (target, property) => {
-
-    }
+import * as fs from 'fs';
+export interface Demo10 {
+    title: string;
 }
 export interface Demo0 {
+    /**
+     * demo0 desc
+     */
     desc: string;
 }
-export interface Demo2 {
+
+export interface Demo2 extends Demo0 {
     /**
      * demo2 title
      */
     title: string;
 }
-export interface Demo3 {
+export interface Demo3 extends Demo2 {
     /**
      * demo3 title
      */
     title: string;
 }
-export type Demo = Demo2 | Demo3 | DemoEnum;
+
 
 export enum DemoEnum {
-    Demo = 1,
-    Demo2 = 2
+    Demo4 = 1,
+    Demo5 = 2
 }
-
-@Scalar(`Date`)
-export class Date { }
 
 @Controller()
 export class DemoGraphql implements Demo3 {
@@ -36,15 +36,19 @@ export class DemoGraphql implements Demo3 {
      * title
      * @return Number
      */
-    @Demo(`title`)
     title: string;
+    /**
+     * desc
+     */
+    desc: string;
     /**
      * get demo
      * @return {Number}
      */
-    @Query({ demo: "demo2" })
-    async getDemo(): Promise<string> {
-        return `string`
+    @Query()
+    async getDemo(input: string): Promise<Demo3> {
+        fs.writeFileSync(``, ``)
+        return `string` as any
     }
 
     /**
@@ -53,8 +57,8 @@ export class DemoGraphql implements Demo3 {
      * @return {String}
      */
     @Mutation(`demo`)
-    async getDemo2(title: string): Promise<string> {
-        return `demo2`
+    async getDemo2(title: Demo2): Promise<Demo3> {
+        return `demo2` as any
     }
 
     /**

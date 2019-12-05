@@ -1,7 +1,7 @@
 import * as ts from 'typescript';
 import { PlainModuleRef } from '@nger/plain';
 import * as ast from '@nger/ast_ts';
-import { cache } from './cache';
+import * as graphql from '@nger/ast.graphql'
 export class CompilerHelper {
 
 }
@@ -14,6 +14,83 @@ export class CompilerContext {
     children: Map<string, CompilerContext> = new Map();
     parent: CompilerContext;
     _statements: any[] = [];
+
+    query: graphql.FieldDefinitionNode[][] = [];
+    mutation: graphql.FieldDefinitionNode[][] = [];
+    subscription: graphql.FieldDefinitionNode[][] = [];
+    private toArray(stats: Map<string, any>) {
+        const args: any[] = [];
+        stats.forEach((it, key) => {
+            args.push(it)
+        })
+        return args;
+    }
+    addQuery(query: any) {
+        this.query.push(query)
+    }
+    getQuery(): graphql.FieldDefinitionNode[] {
+        const statements: Map<string, any> = new Map();
+        const push = (stats: any[]) => stats.map(it => {
+            statements.set(it.name.value, it)
+        });
+        push(this.query);
+        this.children.forEach(child => {
+            push(child.getQuery())
+        });
+        return this.toArray(statements);
+    }
+    addMutation(query: any) {
+        this.mutation.push(query)
+    }
+    getMutation(): graphql.FieldDefinitionNode[] {
+        const statements: Map<string, any> = new Map();
+        const push = (stats: any[]) => stats.map(it => {
+            statements.set(it.name.value, it)
+        });
+        push(this.mutation);
+        this.children.forEach(child => {
+            push(child.getMutation())
+        });
+        return this.toArray(statements);
+    }
+    addSubscription(query: any) {
+        this.subscription.push(query)
+    }
+    getSubscription(): graphql.FieldDefinitionNode[] {
+        const statements: Map<string, any> = new Map();
+        const push = (stats: any[]) => stats.map(it => {
+            statements.set(it.name.value, it)
+        });
+        push(this.mutation);
+        this.children.forEach(child => {
+            push(child.getSubscription())
+        });
+        return this.toArray(statements);
+    }
+    createObjectType(name: string, fields: graphql.FieldDefinitionNode[]): graphql.ObjectTypeDefinitionNode | undefined {
+        const query = new graphql.ObjectTypeDefinitionNode();
+        if (fields.length > 0) {
+            query.name = new graphql.NameNode(name);
+            query.fields = fields;
+            return query;
+        }
+    }
+    createObjectTypeDefinitionNode(): graphql.ObjectTypeDefinitionNode[] {
+        const res: graphql.ObjectTypeDefinitionNode[] = [];
+        const query = this.createObjectType(`Query`, this.getQuery());
+        if (query) {
+            res.push(query)
+        }
+        const mutation = this.createObjectType(`Mutation`, this.getMutation());
+        if (mutation) {
+            res.push(mutation)
+        }
+        const subscription = this.createObjectType(`Subscription`, this.getSubscription());
+        if (subscription) {
+            res.push(subscription)
+        }
+        return res;
+    }
     setStatements(statements: any[]) {
         this._statements.push(...statements)
     }
@@ -33,6 +110,7 @@ export class CompilerContext {
         this.children.forEach(child => {
             push(child.statements)
         });
+        push(this.createObjectTypeDefinitionNode())
         return toArray(statements);
     }
     get filePath() {
@@ -85,8 +163,13 @@ export class CompilerContext {
             Reflect.set(target, '__node', source)
         })
     }
-    create(ast?: ts.Node): ast.Node | undefined {
+    create(ast?: any): ast.Node | undefined {
         if (ast) {
+            if (ast.valueDeclartion) {
+                return this.moduleRef.create<ast.Symbol & { __node: ts.Symbol }>(ast.valueDeclartion, 'kind', (source, target) => {
+                    Reflect.set(target, '__node', source)
+                })
+            }
             return this.moduleRef.create<ast.Symbol & { __node: ts.Symbol }>(ast, 'kind', (source, target) => {
                 Reflect.set(target, '__node', source)
             })

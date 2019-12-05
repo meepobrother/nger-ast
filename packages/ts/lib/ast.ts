@@ -1180,8 +1180,7 @@ export class TypeLiteralNode extends Node {
     desc: ts.SyntaxKind.PropertySignature
 })
 export class PropertySignature extends Node {
-
-    @PlainPro({isClass: true})
+    @PlainPro({ isClass: true })
     jsDoc: JSDoc[];
     @PlainPro()
     kind: ts.SyntaxKind.PropertySignature;
@@ -3125,6 +3124,12 @@ export class BlockScopedVariableSymbol extends Node {
 export class PropertySymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.Property;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    escapedName: string;
+    @PlainPro({ isClass: true })
+    valueDeclaration: PropertySignature;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitPropertySymbol(this, context)
     }
@@ -3135,6 +3140,12 @@ export class PropertySymbol extends Node {
 export class EnumMemberSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.EnumMember;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    escapedName: string;
+    @PlainPro({ isClass: true })
+    valueDeclaration: Node;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitEnumMemberSymbol(this, context)
     }
@@ -3155,6 +3166,14 @@ export class FunctionSymbol extends Node {
 export class ClassSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.Class;
+    @PlainPro()
+    escapedName: string;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    members: Map<string, ts.Symbol>;
+    @PlainPro({ isClass: true })
+    valueDeclaration: ClassDeclaration;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitClassSymbol(this, context)
     }
@@ -3163,8 +3182,18 @@ export class ClassSymbol extends Node {
     desc: { flags: ts.SymbolFlags.Interface }
 })
 export class InterfaceSymbol extends Node {
+    @PlainPro({ isClass: true })
+    declarations: InterfaceDeclaration[];
     @PlainPro()
     flags: ts.SymbolFlags.Interface;
+    @PlainPro()
+    id: number;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    escapedName: string;
+    @PlainPro()
+    members: Map<string, ts.Symbol>;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitInterfaceSymbol(this, context)
     }
@@ -3185,6 +3214,12 @@ export class ConstEnumSymbol extends Node {
 export class RegularEnumSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.RegularEnum;
+    @PlainPro()
+    escapedName: string;
+    @PlainPro()
+    name: string;
+    @PlainPro({ isClass: true })
+    valueDeclaration: EnumDeclaration;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitRegularEnumSymbol(this, context)
     }
@@ -3215,6 +3250,12 @@ export class NamespaceModuleSymbol extends Node {
 export class TypeLiteralSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.TypeLiteral;
+    @PlainPro()
+    members: Map<string, ts.Symbol>;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    escapedName: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitTypeLiteralSymbol(this, context)
     }
@@ -3235,6 +3276,12 @@ export class ObjectLiteralSymbol extends Node {
 export class MethodSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.Method;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    escapedName: string;
+    @PlainPro({ isClass: true })
+    valueDeclaration: MethodSignature;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitMethodSymbol(this, context)
     }
@@ -3249,6 +3296,8 @@ export class ConstructorSymbol extends Node {
         return visitor.visitConstructorSymbol(this, context)
     }
 }
+
+
 @Plain({
     desc: { flags: ts.SymbolFlags.GetAccessor }
 })
@@ -3275,6 +3324,10 @@ export class SetAccessorSymbol extends Node {
 export class SignatureSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.Signature;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    escapedName: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitSignatureSymbol(this, context)
     }
@@ -3285,6 +3338,10 @@ export class SignatureSymbol extends Node {
 export class TypeParameterSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.TypeParameter;
+    @PlainPro()
+    name: string;
+    @PlainPro()
+    escapedName: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitTypeParameterSymbol(this, context)
     }
@@ -3293,8 +3350,14 @@ export class TypeParameterSymbol extends Node {
     desc: { flags: ts.SymbolFlags.TypeAlias }
 })
 export class TypeAliasSymbol extends Node {
+    @PlainPro({ isClass: true })
+    declarations: Node[];
     @PlainPro()
     flags: ts.SymbolFlags.TypeAlias;
+    @PlainPro()
+    escapedName: string;
+    @PlainPro()
+    name: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitTypeAliasSymbol(this, context)
     }
@@ -3708,6 +3771,7 @@ export class Type {
     @PlainPro({ isClass: true })
     aliasTypeArguments?: Type[];
 }
+
 // visit\(visitor: Visitor, context\?: any\) \{ \}
 export interface Visitor {
     visitNoneSymbol(node: NoneSymbol, context?: any): any;

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { DemoGraphql } from './graphql';
+import { DemoGraphql, DateScalar, JsonScalar } from './graphql';
 import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
 @Module({
@@ -13,7 +13,9 @@ import { join } from 'path';
         })
     ],
     providers: [
-        DemoGraphql
+        DateScalar,
+        JsonScalar,
+        DemoGraphql,
     ]
 })
 export class DemoModule { }
