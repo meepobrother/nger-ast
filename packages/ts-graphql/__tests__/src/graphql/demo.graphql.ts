@@ -1,6 +1,5 @@
-import { Query, Mutation, Subscription, Scalar } from '@nestjs/graphql';
+import { Query, Mutation, Subscription } from '@nestjs/graphql';
 import { Controller } from '@nestjs/common';
-import * as fs from 'fs';
 export interface Demo10 {
     title: string;
 }
@@ -22,8 +21,8 @@ export interface Demo3 extends Demo2 {
      * demo3 title
      */
     title: string;
+    demo2: Demo2;
 }
-
 
 export enum DemoEnum {
     Demo4 = 1,
@@ -37,6 +36,8 @@ export class DemoGraphql implements Demo3 {
      * @return Number
      */
     title: string;
+
+    demo2: Demo2;
     /**
      * desc
      */
@@ -47,8 +48,14 @@ export class DemoGraphql implements Demo3 {
      */
     @Query()
     async getDemo(input: string): Promise<Demo3> {
-        fs.writeFileSync(``, ``)
-        return `string` as any
+        return {
+            title: 'title',
+            desc: `desc`,
+            demo2: {
+                desc: ``,
+                title: ``
+            }
+        }
     }
 
     /**
@@ -56,16 +63,16 @@ export class DemoGraphql implements Demo3 {
      * @param {String} title  返回值
      * @return {String}
      */
-    @Mutation(`demo`)
+    @Mutation()
     async getDemo2(title: Demo2): Promise<Demo3> {
-        return `demo2` as any
+        return {} as any
     }
 
     /**
      * get demo3
      * @return {Demo0}
      */
-    @Subscription(`demo2`)
+    @Subscription()
     getDemo3(): AsyncIterator<any> {
         return {} as any;
     }

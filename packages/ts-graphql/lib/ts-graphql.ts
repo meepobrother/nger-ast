@@ -317,7 +317,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitSetAccessorDeclaration(node: ast.SetAccessorDeclaration, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitMethodDeclaration(node: ast.MethodDeclaration, context?: any) {
+    visitMethodDeclaration(node: ast.MethodDeclaration, context: CompilerContext) {
         let { name, type, jsDoc, typeParameters, decorators, modifiers, parameters, asteriskToken, questionToken, exclamationToken } = node.toJson(this, context, 'body');
         if (modifiers) {
             if (['private', 'protected', 'static'].some(it => modifiers.includes(it))) {
@@ -351,10 +351,13 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 return parameter;
             });
             ast.arguments = parameters;
-            ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
             const graphqlType = this.createGraphqlType(type, context);
+            ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
             if (graphqlType) {
                 context.setStatements([graphqlType])
+                const type = new graphql.NamedTypeNode();
+                type.name = graphqlType.name;
+                ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
             }
             if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
             if (_current === 'Query') {
@@ -1102,12 +1105,17 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitCallExpression(node: ast.CallExpression, context: CompilerContext) {
         const { expression, arguments: args } = node.toJson(this, context);
         const type = expression.__type;
+        if (!type.symbol) {
+            debugger;
+        }
         const ast = context.create(type.symbol.valueDeclaration);
-        // call expression
         if (args) {
             args.map((arg: any) => {
                 if (arg.__type) {
                     const type = arg.__type;
+                    if (!type.symbol) {
+                        return;
+                    }
                     const ast = context.create(type.symbol.valueDeclaration);
                     if (ast) ast.visit(this, context)
                 }

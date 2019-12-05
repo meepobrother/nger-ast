@@ -4,18 +4,17 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
 @Module({
     imports: [
-        GraphQLModule.forRootAsync({
-            useFactory: () => {
-                return {
-                    typePaths: [join(__dirname, 'assets', 'magnus.server.graphql')]
-                }
+        GraphQLModule.forRoot({
+            typePaths: [join(__dirname, 'graphql.graphql')],
+            resolverValidationOptions: {
+                requireResolversForResolveType: false
             }
         })
     ],
     providers: [
         DateScalar,
         JsonScalar,
-        DemoGraphql,
+        DemoGraphql
     ]
 })
 export class DemoModule { }

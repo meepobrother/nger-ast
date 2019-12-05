@@ -1,0 +1,41 @@
+scalar Date
+
+scalar Json
+
+type Demo3Result {
+  title: String!
+  desc: String!
+}
+
+input Demo2Input {
+  """demo2 title"""
+  title: String!
+  desc: String!
+}
+
+interface Demo3 {
+  title: String!
+  desc: String!
+}
+
+type DemoGraphql implements Demo3 {
+  """title"""
+  title: String!
+  """desc"""
+  desc: String!
+}
+
+type Query {
+  """get demo"""
+  getDemo(input: String!): Demo3Result!
+}
+
+type Mutation {
+  """get demo2"""
+  getDemo2(title: Demo2Input): Demo3Result!
+}
+
+type Subscription {
+  """get demo3"""
+  getDemo3: Json!
+}

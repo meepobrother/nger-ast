@@ -61,7 +61,7 @@ export class CompilerContext {
         const push = (stats: any[]) => stats.map(it => {
             statements.set(it.name.value, it)
         });
-        push(this.mutation);
+        push(this.subscription);
         this.children.forEach(child => {
             push(child.getSubscription())
         });

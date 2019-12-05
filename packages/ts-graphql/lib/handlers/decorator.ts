@@ -7,8 +7,20 @@ import { CompilerContext } from '../compiler';
 import * as graphql from '@nger/ast.graphql';
 export class NestDecoratorVisitor implements DecoratorVisitor {
     interfaceTypeDefinitionNodeToObjectTypeDefinitionNode(node: graphql.InterfaceTypeDefinitionNode): graphql.ObjectTypeDefinitionNode {
+        const nameValue = new graphql.NameNode(node.name.value + 'Result')
         const ast = new graphql.ObjectTypeDefinitionNode();
-        ast.name = node.name;
+        ast.name = nameValue;
+        ast.description = node.description;
+        ast.directives = node.directives;
+        if (node.fields) {
+            ast.fields = node.fields.map(it => this.fieldDefinitionNodeToInputValueDefinitionNode(it)).filter(it => !!it) as any;
+        }
+        return ast;
+    }
+    interfaceTypeDefinitionNodeToInputObjectTypeDefinitionNode(node: graphql.InterfaceTypeDefinitionNode): graphql.InputObjectTypeDefinitionNode {
+        const ast = new graphql.InputObjectTypeDefinitionNode();
+        const nameValue = new graphql.NameNode(node.name.value + 'Input')
+        ast.name = nameValue;
         ast.description = node.description;
         ast.directives = node.directives;
         if (node.fields) {
@@ -64,6 +76,9 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                 if (it.token === ts.SyntaxKind.ImplementsKeyword) {
                     it.types.map((type: any) => {
                         const field = this.handlerType(type.__type, visitor, context)
+                        if (field) {
+                            context.setStatements([field])
+                        }
                         if (Array.isArray(ast.interfaces)) {
                             ast.interfaces.push(type)
                         }
@@ -179,17 +194,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         ast.type = node.type;
         return ast;
     }
-    interfaceTypeDefinitionNodeToInputObjectTypeDefinitionNode(node: graphql.InterfaceTypeDefinitionNode): graphql.InputObjectTypeDefinitionNode {
-        const ast = new graphql.InputObjectTypeDefinitionNode();
-        const nameValue = new graphql.NameNode(node.name.value + 'Input')
-        ast.name = nameValue;
-        ast.description = node.description;
-        ast.directives = node.directives;
-        if (node.fields) {
-            ast.fields = node.fields.map(it => this.fieldDefinitionNodeToInputValueDefinitionNode(it)).filter(it => !!it) as any;
-        }
-        return ast;
-    }
+
     Interface(node: ast.InterfaceDeclaration, visitor: ast.Visitor, context: CompilerContext): graphql.InterfaceTypeDefinitionNode {
         const { members, name, typeParameters, heritageClauses, type, questionToken } = node.toJson(visitor, context);
         const ast = new graphql.InterfaceTypeDefinitionNode();
@@ -205,7 +210,6 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             });
         }
         ast.fields = this.uniqueByKey(members, (it: graphql.FieldDefinitionNode) => it && it.name && it.name.value);
-        context.setStatements([ast]);
         return ast;
     }
     Enum(node: ast.EnumDeclaration, visitor: ast.Visitor, context: CompilerContext) {
