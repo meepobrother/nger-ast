@@ -4,9 +4,9 @@ import { CompilerContext, TsGraphqlVisitor } from '@nger/ast.ts-graphql';
 import { Project } from '@nger/ast.tsc';
 import { DocumentNode } from '@nger/ast.graphql';
 import { NestDecoratorVisitor } from './handlers/decorator';
-import { join, dirname } from 'path';
-import { existsSync, readFileSync } from 'fs';
-import * as ts from 'typescript';
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { print } from '@nger/ast.graphql';
 const root = process.cwd();
 const tsconfigPath = getTsConfigPath(root);
 function getTsConfigPath(path: string): string {
@@ -16,8 +16,12 @@ function getTsConfigPath(path: string): string {
     }
     return getTsConfigPath(join(path, '..'))
 }
-export function tsGraphql(src: string): DocumentNode | undefined {
-    const project = new Project([src], tsconfigPath);
+export function toGraphql(src: string, tsconfig?: string): string | undefined {
+    const doc = tsGraphqlAst(src);
+    if (doc) return print(doc)
+}
+export function tsGraphqlAst(src: string, tsconfig?: string): DocumentNode | undefined {
+    const project = new Project([src], tsconfig || tsconfigPath);
     const compilerContext = new CompilerContext(project.program)
     const tsGraphqlVisitor = new TsGraphqlVisitor(new NestDecoratorVisitor());
     const node = project.getSourceFile(src);

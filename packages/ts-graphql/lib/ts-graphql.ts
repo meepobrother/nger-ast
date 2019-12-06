@@ -1,4 +1,5 @@
 import * as ast from '@nger/ast.tsc';
+import * as astTs from '@nger/ast.tsc';
 import * as graphql from '@nger/ast.graphql';
 import { CompilerContext } from './compiler';
 import { join, dirname, extname } from 'path';
@@ -32,6 +33,148 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitClassSymbol(node: ast.ClassSymbol, context?: any) {
         const { valueDeclaration } = node;
         valueDeclaration.visit(this, context)
+    }
+    handlerType(type: ts.Type, visitor: ast.Visitor, context: CompilerContext) {
+        const symbol = type.symbol || type.aliasSymbol;
+        if (symbol) {
+            const symbolAst = context.create(symbol);
+            if (symbolAst && typeof symbolAst.visit === 'function') return symbolAst.visit(visitor, context);
+        }
+    }
+    private getInterfaceParent(symbol: ast.InterfaceSymbol, visitor: ast.Visitor, context: CompilerContext) {
+        let members: any[] = [];
+        if (!symbol) {
+            return;
+        }
+        if (symbol.declarations) {
+            const node = symbol.declarations[0];
+            if (ast) members = node.members;
+            if (node.heritageClauses) {
+                try {
+                    const parents = node.heritageClauses
+                        .map((it: any) => it.types)
+                        .filter((it: any) => !!it)
+                        .flat()
+                        .map(it => {
+                            return it.toJson(visitor, context)
+                        })
+                        .map(it => it.expression.__type.symbol)
+                        .map(it => {
+                            return context.create(it)
+                        })
+                        .map((it: any) => {
+                            return this.getInterfaceParent(it, visitor, context)
+                        })
+                        .filter(it => !!it)
+                        .flat();
+                    members.unshift(...parents)
+                } catch (e) { }
+            }
+        }
+        return members.map(it => {
+            if (it instanceof graphql.FieldDefinitionNode) {
+                return it;
+            }
+            if (it instanceof astTs.PropertySignature) {
+                const { questionToken } = it;
+                const ast = new graphql.FieldDefinitionNode();
+                ast.name = it.name.visit(visitor, context);
+                const type = it.type && it.type.visit(visitor, context);
+                if (type) {
+                    ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+                    if (type.name) {
+                        if (type.name.__type) {
+                            this.handlerType(type.name.__type, visitor, context)
+                        }
+                    }
+                    return ast;
+                }
+            }
+            if (it instanceof astTs.MethodSignature) {
+                const { questionToken } = it;
+                const ast = new graphql.FieldDefinitionNode();
+                ast.name = it.name.visit(visitor, context);
+                ast.arguments = it.parameters.map(par => par.visit(visitor, context))
+                const type = it.type && it.type.visit(visitor, context);
+                if (type) {
+                    ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+                    if (type.name) {
+                        if (type.name.__type) {
+                            this.handlerType(type.name.__type, visitor, context)
+                        }
+                    }
+                    return ast;
+                }
+                return ast;
+            }
+        });
+    }
+    private fieldDefinitionNodeToInputValueDefinitionNode(node: graphql.FieldDefinitionNode, context: CompilerContext): graphql.InputValueDefinitionNode | undefined {
+        if (Array.isArray(node.arguments)) {
+            return;
+        }
+        const ast = new graphql.InputValueDefinitionNode();
+        ast.name = node.name;
+        ast.description = node.description;
+        ast.directives = node.directives;
+        // 转input
+        const type = node;
+        ast.type = node.type;
+        if (type.name) {
+            if (type.name.__type) {
+                const res = this.handlerType(type.name.__type, this, context)
+                if (res) {
+                    if (res instanceof graphql.InterfaceTypeDefinitionNode) {
+                        const obj = this.interfaceTypeDefinitionNodeToObjectTypeDefinitionNode(res, context)
+                        if (obj) {
+                            context.setStatements([obj]);
+                            if (node.type instanceof graphql.NonNullTypeNode) {
+                                const type = new graphql.NonNullTypeNode();
+                                const named = new graphql.NamedTypeNode()
+                                named.name = obj.name;
+                                type.type = named;
+                                ast.type = type;
+                            }
+                            if (node.type instanceof graphql.ListTypeNode) {
+                                const type = new graphql.ListTypeNode();
+                                const named = new graphql.NamedTypeNode()
+                                named.name = obj.name;
+                                type.type = named;
+                                ast.type = type;
+                            }
+                            if (node.type instanceof graphql.NamedTypeNode) {
+                                const type = new graphql.NamedTypeNode()
+                                type.name = obj.name;
+                                ast.type = type;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ast;
+    }
+    interfaceTypeDefinitionNodeToObjectTypeDefinitionNode(node: graphql.InterfaceTypeDefinitionNode, context: CompilerContext): graphql.ObjectTypeDefinitionNode {
+        const nameValue = new graphql.NameNode(node.name.value)
+        const ast = new graphql.ObjectTypeDefinitionNode();
+        ast.name = nameValue;
+        ast.description = node.description;
+        ast.directives = node.directives;
+        if (node.fields) {
+            ast.fields = node.fields.map(it => this.fieldDefinitionNodeToInputValueDefinitionNode(it, context)).filter(it => !!it) as any;
+        }
+        return ast;
+    }
+    interfaceTypeDefinitionNodeToInputObjectTypeDefinitionNode(node: graphql.InterfaceTypeDefinitionNode, context: CompilerContext): graphql.InputObjectTypeDefinitionNode {
+        const ast = new graphql.InputObjectTypeDefinitionNode();
+        const nameValue = new graphql.NameNode(node.name.value + 'Input')
+        ast.name = nameValue;
+        ast.description = node.description;
+        ast.directives = node.directives;
+        if (node.fields) {
+            ast.fields = node.fields.map(it => this.fieldDefinitionNodeToInputValueDefinitionNode(it, context)).filter(it => !!it) as any;
+        }
+        return ast;
     }
     visitInterfaceSymbol(node: ast.InterfaceSymbol, context: CompilerContext): any {
         const { declarations } = node;
@@ -390,7 +533,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 if (ast) {
                     const res = ast.visit(this, context);
                     if (res instanceof graphql.InterfaceTypeDefinitionNode) {
-                        return this.handler.interfaceTypeDefinitionNodeToObjectTypeDefinitionNode(res)
+                        return this.interfaceTypeDefinitionNodeToObjectTypeDefinitionNode(res, context)
                     }
                 }
             }
@@ -405,7 +548,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 if (ast && typeof ast.visit === 'function') {
                     const res = ast.visit(this, context);
                     if (res instanceof graphql.InterfaceTypeDefinitionNode) {
-                        return this.handler.interfaceTypeDefinitionNodeToInputObjectTypeDefinitionNode(res)
+                        return this.interfaceTypeDefinitionNodeToInputObjectTypeDefinitionNode(res, context)
                     }
                 }
             }
@@ -875,7 +1018,12 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext): any {
-        return this.handler.Enum(node, this, context)
+        const { name, members } = node.toJson(this, context);
+        const ast = new graphql.EnumTypeDefinitionNode();
+        ast.name = name;
+        ast.values = members;
+        context.setStatements([ast])
+        return ast;
     }
     visitPropertyAccessEntityNameExpression(node: ast.PropertyAccessEntityNameExpression, context: CompilerContext) {
         const { expression, name } = node.toJson(this, context);
@@ -970,15 +1118,40 @@ export class TsGraphqlVisitor implements ast.Visitor {
             ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
             if (type.name) {
                 if (type.name.__type) {
-                    const res = this.handler.handlerType(type.name.__type, this, context)
+                    const res = this.handlerType(type.name.__type, this, context)
                 }
             }
             if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
             return ast;
         }
     }
+    uniqueByKey<T>(it: T[], fn: (a: T) => string): T[] {
+        const items: Map<string, T> = new Map();
+        it.filter(it => !!it).map(i => {
+            items.set(fn(i), i)
+        });
+        const arrs: T[] = [];
+        items.forEach(it => {
+            it && arrs.push(it)
+        });
+        return arrs;
+    }
     visitInterfaceDeclaration(node: ast.InterfaceDeclaration, context: CompilerContext): any {
-        return this.handler.Interface(node, this, context);
+        const { members, name, typeParameters, heritageClauses, type, questionToken } = node.toJson(this, context);
+        const ast = new graphql.InterfaceTypeDefinitionNode();
+        ast.name = name;
+        if (Array.isArray(heritageClauses)) {
+            ast.interfaces = [];
+            heritageClauses.map((it: any) => {
+                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
+                    const types = it.types.map((type: any) => context.create(type.__type.symbol))
+                    const args = types.filter((it: any) => !!it).map((type: any) => this.getInterfaceParent(type, this, context)).flat();
+                    members.push(...args);
+                }
+            });
+        }
+        ast.fields = this.uniqueByKey(members, (it: graphql.FieldDefinitionNode) => it && it.name && it.name.value);
+        return ast;
     }
     visitNoSubstitutionTemplateLiteral(node: ast.NoSubstitutionTemplateLiteral, context?: any) {
         const { text, rawText } = node;
@@ -1057,7 +1230,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const type = this.createGraphqlNamedTypeNode(node);
         if (type.name) {
             if (type.name.__type) {
-                return this.handler.handlerType(type.name.__type, this, context)
+                return this.handlerType(type.name.__type, this, context)
             }
         }
     }

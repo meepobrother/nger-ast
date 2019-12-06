@@ -2,7 +2,13 @@ scalar Date
 
 scalar Json
 
-type Demo3Result {
+type Demo2 {
+  """demo2 title"""
+  title: String!
+  desc: String!
+}
+
+type Demo3 {
   title: String
   demo2: Demo2!
   title2: String
@@ -25,12 +31,12 @@ type DemoGraphql {
 
 type Query {
   """get demo"""
-  getDemo(input: String!): [Demo3Result]!
+  getDemo(input: String!): [Demo3]!
 }
 
 type Mutation {
   """get demo2"""
-  getDemo2(title: Demo2Input): Demo3Result!
+  getDemo2(title: Demo2Input): Demo3!
 }
 
 type Subscription {
