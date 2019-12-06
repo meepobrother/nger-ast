@@ -20,3 +20,8 @@ export class Int64 extends Number { }
 export class Sint64 extends Number { }
 export class Fixed64 extends Number { }
 export class Sfixed64 extends Number { }
+export interface Demo {
+    title?: string;
+    title2?: string;
+    title3?: string;
+}
