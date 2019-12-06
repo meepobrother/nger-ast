@@ -1,5 +1,6 @@
 import { Query, Mutation, Subscription } from '@nestjs/graphql';
 import { Controller } from '@nestjs/common';
+import { Demo } from '@nger/ast.core';
 export interface Demo10 {
     title: string;
 }
@@ -16,7 +17,7 @@ export interface Demo2 extends Demo0 {
      */
     title: string;
 }
-export interface Demo3 extends Demo2 {
+export interface Demo3 extends Demo {
     /**
      * demo3 title
      */
@@ -30,7 +31,7 @@ export enum DemoEnum {
 }
 
 @Controller()
-export class DemoGraphql implements Demo3 {
+export class DemoGraphql {
     /**
      * title
      * @return Number
@@ -50,7 +51,6 @@ export class DemoGraphql implements Demo3 {
     async getDemo(input: string): Promise<Demo3[]> {
         return [{
             title: 'title',
-            desc: `desc`,
             demo2: {
                 desc: ``,
                 title: ``

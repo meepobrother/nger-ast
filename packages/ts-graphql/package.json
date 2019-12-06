@@ -1,34 +1,36 @@
 {
-  "name": "@nger/ast.ts-graphql",
-  "version": "0.0.0",
-  "description": "> TODO: description",
-  "author": "imeepos <1037483576@qq.com>",
-  "homepage": "https://github.com/meepobrother/nger-ast#readme",
-  "license": "ISC",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "directories": {
-    "lib": "lib",
-    "test": "__tests__"
-  },
-  "files": [
-    "lib"
-  ],
-  "publishConfig": {
-    "registry": "http://registry.npmjs.org"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/meepobrother/nger-ast.git"
-  },
-  "scripts": {
-    "test": "ts-node -r tsconfig-paths/register __tests__/src/main.ts"
-  },
-  "bugs": {
-    "url": "https://github.com/meepobrother/nger-ast/issues"
-  },
-  "dependencies": {
-    "@nestjs/common": "^6.10.5",
-    "@nger/plain": "^1.0.25"
-  }
+    "name": "@nger/ast.ts-graphql",
+    "version": "0.0.0",
+    "description": "> TODO: description",
+    "author": "imeepos <1037483576@qq.com>",
+    "homepage": "https://github.com/meepobrother/nger-ast#readme",
+    "license": "ISC",
+    "main": "lib/index.js",
+    "types": "lib/index.d.ts",
+    "directories": {
+        "lib": "lib",
+        "test": "__tests__"
+    },
+    "files": [
+        "lib"
+    ],
+    "publishConfig": {
+        "registry": "http://registry.npmjs.org"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/meepobrother/nger-ast.git"
+    },
+    "scripts": {
+        "test": "ts-node -r tsconfig-paths/register __tests__/src/main.ts"
+    },
+    "bugs": {
+        "url": "https://github.com/meepobrother/nger-ast/issues"
+    },
+    "dependencies": {
+        "@nestjs/common": "^6.10.5",
+        "@nger/plain": "^1.0.25",
+        "@nger/ast_ts": "1.0.0",
+        "@nger/ast.graphql": "1.0.0"
+    }
 }

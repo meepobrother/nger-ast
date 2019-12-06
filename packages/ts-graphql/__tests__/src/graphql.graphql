@@ -3,9 +3,10 @@ scalar Date
 scalar Json
 
 type Demo3Result {
-  title: String!
+  title: String
   demo2: Demo2!
-  desc: String!
+  title2: String
+  title3: String
 }
 
 input Demo2Input {
@@ -14,13 +15,7 @@ input Demo2Input {
   desc: String!
 }
 
-interface Demo3 {
-  title: String!
-  demo2: Demo2!
-  desc: String!
-}
-
-type DemoGraphql implements Demo3 {
+type DemoGraphql {
   """title"""
   title: String!
   demo2: Demo2!

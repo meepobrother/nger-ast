@@ -120,6 +120,9 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
     }
     private getInterfaceParent(symbol: ast.InterfaceSymbol, visitor: ast.Visitor, context: CompilerContext) {
         let members: any[] = [];
+        if (!symbol) {
+            return;
+        }
         if (symbol.declarations) {
             const node = symbol.declarations[0];
             if (ast) members = node.members;
@@ -139,6 +142,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                         .map((it: any) => {
                             return this.getInterfaceParent(it, visitor, context)
                         })
+                        .filter(it => !!it)
                         .flat();
                     members.unshift(...parents)
                 } catch (e) { }
@@ -203,7 +207,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             heritageClauses.map((it: any) => {
                 if (it.token === ts.SyntaxKind.ExtendsKeyword) {
                     const types = it.types.map((type: any) => context.create(type.__type.symbol))
-                    const args = types.map((type: any) => this.getInterfaceParent(type, visitor, context)).flat();
+                    const args = types.filter((it: any) => !!it).map((type: any) => this.getInterfaceParent(type, visitor, context)).flat();
                     members.push(...args);
                 }
             });

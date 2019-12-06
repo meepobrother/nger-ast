@@ -11,12 +11,26 @@
     cli-color "2.0.0"
     uuid "3.3.3"
 
+"@nger/ast.core@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@nger/ast.core/-/ast.core-1.0.0.tgz#38ead4e2f43944614837bc214d8c77c6c7ad722d"
+  integrity sha512-pe9T3og3H9E3JO3KnmcogfAeG38BXOLJ2rhMc1rN3ifdBb99YD8NUjeuKOwWBnSS2LhXtYAeyUVLoJF4qtGpIw==
+  dependencies:
+    "@nger/plain" "^1.0.19"
+
 "@nger/decorator@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@nger/decorator/-/decorator-1.0.1.tgz#cf8a6de46c920106c908e1ac27d952f4d3105253"
   integrity sha512-SUvkJZ7twApLjYGhmKSzw2RsJrHqe4FfBeSRnIjucV38lHwXlbkXIEFTDs9F8U6qtlBifU9KaMgX3UZ0ON6NiA==
   dependencies:
     reflect-metadata "^0.1.13"
+
+"@nger/plain@^1.0.19":
+  version "1.0.27"
+  resolved "https://registry.yarnpkg.com/@nger/plain/-/plain-1.0.27.tgz#76fc13066902fb4cab882efc9942333369fa2b36"
+  integrity sha512-EctZ/aycizkgVdc5O9SqkCkhGPXpbUIsM/tcdLsep4pKBba9bgg15jTYDakEjnU3MLaN+ybi3Jd8Xa3oYiVueg==
+  dependencies:
+    "@nger/decorator" "^1.0.1"
 
 "@nger/plain@^1.0.25":
   version "1.0.26"
