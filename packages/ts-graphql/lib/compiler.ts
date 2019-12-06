@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { PlainModuleRef } from '@nger/plain';
-import * as ast from '@nger/ast_ts';
+import * as ast from '@nger/ast.tsc';
 import * as graphql from '@nger/ast.graphql'
 export class CompilerContext {
     typeChecker: ts.TypeChecker;

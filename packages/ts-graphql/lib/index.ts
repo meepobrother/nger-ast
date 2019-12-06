@@ -1,7 +1,7 @@
 export * from './compiler';
 export * from './ts-graphql';
 import { CompilerContext, TsGraphqlVisitor } from '@nger/ast.ts-graphql';
-import { Project } from '@nger/ast_ts';
+import { Project } from '@nger/ast.tsc';
 import { DocumentNode } from '@nger/ast.graphql';
 import { NestDecoratorVisitor } from './handlers/decorator';
 export function tsGraphql(src: string): DocumentNode | undefined {

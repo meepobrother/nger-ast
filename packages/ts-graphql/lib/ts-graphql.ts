@@ -1,4 +1,4 @@
-import * as ast from '@nger/ast_ts';
+import * as ast from '@nger/ast.tsc';
 import * as graphql from '@nger/ast.graphql';
 import { CompilerContext } from './compiler';
 import { join, dirname, extname } from 'path';
@@ -42,7 +42,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const inter = new graphql.InterfaceTypeDefinitionNode();
         inter.name = new graphql.NameNode(name);
         const fields: any[] = [];
-        debugger;
         members && members.forEach((it: any) => {
             const symbol = context.create(it);
             if (symbol && typeof symbol.visit === 'function') {
@@ -91,7 +90,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     visitTypeParameterSymbol(node: ast.TypeParameterSymbol, context?: any) {
         const { name } = node;
-        debugger;
         return name;
     }
     visitTypeAliasSymbol(node: ast.TypeAliasSymbol, context: CompilerContext): any {

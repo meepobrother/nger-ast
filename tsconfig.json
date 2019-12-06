@@ -48,8 +48,8 @@
             "@nger/ast.graphql": [
                 "packages/graphql/lib/index.ts"
             ],
-            "@nger/ast_ts": [
-                "packages/ts/lib/index.ts"
+            "@nger/ast.tsc": [
+                "packages/tsc/lib/index.ts"
             ],
             "@nger/ast.ts-graphql": [
                 "packages/ts-graphql/lib/index.ts"

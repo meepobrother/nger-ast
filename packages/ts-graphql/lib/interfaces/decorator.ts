@@ -1,4 +1,4 @@
-import * as ast from '@nger/ast_ts';
+import * as ast from '@nger/ast.tsc';
 import { CompilerContext } from '../compiler';
 import * as graphql from '@nger/ast.graphql'
 import * as ts from 'typescript';
