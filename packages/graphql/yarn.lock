@@ -9,10 +9,10 @@
   dependencies:
     reflect-metadata "^0.1.13"
 
-"@nger/plain@^1.0.19":
-  version "1.0.19"
-  resolved "https://registry.yarnpkg.com/@nger/plain/-/plain-1.0.19.tgz#54c612e60221d7513bc2e32e8d588470e5a64190"
-  integrity sha512-x5SQE8njF7vgAwnLreq4an6wGcqgZePhL47fYCzDRnRhD8lg4FVdTLbyQLnLEft75feY+uy+lhGsKHcaq5k9Og==
+"@nger/plain@^1.0.27":
+  version "1.0.27"
+  resolved "https://registry.yarnpkg.com/@nger/plain/-/plain-1.0.27.tgz#76fc13066902fb4cab882efc9942333369fa2b36"
+  integrity sha512-EctZ/aycizkgVdc5O9SqkCkhGPXpbUIsM/tcdLsep4pKBba9bgg15jTYDakEjnU3MLaN+ybi3Jd8Xa3oYiVueg==
   dependencies:
     "@nger/decorator" "^1.0.1"
 
@@ -20,3 +20,8 @@ reflect-metadata@^0.1.13:
   version "0.1.13"
   resolved "https://registry.yarnpkg.com/reflect-metadata/-/reflect-metadata-0.1.13.tgz#67ae3ca57c972a2aa1642b10fe363fe32d49dc08"
   integrity sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==
+
+typescript@^3.7.3:
+  version "3.7.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.3.tgz#b36840668a16458a7025b9eabfad11b66ab85c69"
+  integrity sha512-Mcr/Qk7hXqFBXMN7p7Lusj1ktCBydylfQM/FZCk5glCNQJrCUKPkMHdo9R0MTFWsC/4kPFvDS0fDPvukfCkFsw==

@@ -1,4 +1,4 @@
-import { PlainModule, createPlainModule } from '@nger/plain';
+import { PlainModule, createPlainModule, PlainModuleRef } from '@nger/plain';
 import {
     NameNode, DocumentNode, OperationDefinitionNode,
     VariableDefinitionNode, VariableNode,
@@ -46,4 +46,4 @@ import {
     ]
 })
 export class AstModule { }
-export const moduleRef = createPlainModule(AstModule)
+export const moduleRef: PlainModuleRef<AstModule> = createPlainModule(AstModule)

@@ -1,6 +1,6 @@
 {
     "name": "@nger/ast.ts-graphql",
-    "version": "0.0.0",
+    "version": "1.0.2",
     "description": "> TODO: description",
     "author": "imeepos <1037483576@qq.com>",
     "homepage": "https://github.com/meepobrother/nger-ast#readme",
@@ -15,7 +15,8 @@
         "lib"
     ],
     "publishConfig": {
-        "registry": "http://registry.npmjs.org"
+        "registry": "http://registry.npmjs.org",
+        "access": "public"
     },
     "repository": {
         "type": "git",
@@ -28,6 +29,8 @@
         "url": "https://github.com/meepobrother/nger-ast/issues"
     },
     "dependencies": {
-        "@nger/plain": "^1.0.25"
+        "@nger/ast.graphql": "^1.0.4",
+        "@nger/ast.tsc": "^1.0.3",
+        "@nger/plain": "^1.0.27"
     }
 }

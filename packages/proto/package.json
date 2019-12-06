@@ -1,6 +1,6 @@
 {
     "name": "@nger/ast.proto",
-    "version": "0.0.0",
+    "version": "1.0.2",
     "description": "> TODO: description",
     "author": "imeepos <1037483576@qq.com>",
     "homepage": "https://github.com/meepobrother/nger-ast#readme",
@@ -15,7 +15,8 @@
         "lib"
     ],
     "publishConfig": {
-        "registry": "http://registry.npmjs.org"
+        "registry": "http://registry.npmjs.org",
+        "access": "public"
     },
     "repository": {
         "type": "git",
@@ -28,7 +29,6 @@
         "url": "https://github.com/meepobrother/nger-ast/issues"
     },
     "dependencies": {
-        "@nger/plain": "^1.0.19",
-        "protobufjs": "^6.8.8"
+        "@nger/plain": "^1.0.27"
     }
 }

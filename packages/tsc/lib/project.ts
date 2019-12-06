@@ -1,4 +1,5 @@
-import { moduleRef, SourceFile } from '../lib';
+import { SourceFile } from './ast';
+import { moduleRef } from './module';
 import * as ts from 'typescript';
 import { Project as TsMorphProject } from 'ts-morph';
 export class Project {
