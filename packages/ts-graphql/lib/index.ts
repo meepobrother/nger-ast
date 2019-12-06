@@ -1,5 +1,4 @@
 export * from './compiler';
-export * from './toString';
 export * from './ts-graphql';
 import { CompilerContext, TsGraphqlVisitor } from '@nger/ast.ts-graphql';
 import { Project } from '@nger/ast_ts';

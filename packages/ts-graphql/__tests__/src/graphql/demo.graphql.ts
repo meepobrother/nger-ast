@@ -47,15 +47,15 @@ export class DemoGraphql implements Demo3 {
      * @return {Number}
      */
     @Query()
-    async getDemo(input: string): Promise<Demo3> {
-        return {
+    async getDemo(input: string): Promise<Demo3[]> {
+        return [{
             title: 'title',
             desc: `desc`,
             demo2: {
                 desc: ``,
                 title: ``
             }
-        }
+        }]
     }
 
     /**

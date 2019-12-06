@@ -252,6 +252,9 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     visitArrayTypeNode(node: ast.ArrayTypeNode, context: any) {
         const { elementType } = node.toJson(this, context);
+        const ast = new graphql.ListTypeNode();
+        ast.type = elementType;
+        return ast;
     }
     visitTupleTypeNode(node: ast.TupleTypeNode, context: any) {
         throw new Error("Method not implemented.");
@@ -355,9 +358,18 @@ export class TsGraphqlVisitor implements ast.Visitor {
             ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
             if (graphqlType) {
                 context.setStatements([graphqlType])
-                const type = new graphql.NamedTypeNode();
-                type.name = graphqlType.name;
-                ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+                if (type instanceof graphql.ListTypeNode) {
+                    const type = new graphql.ListTypeNode();
+                    const named = new graphql.NamedTypeNode();
+                    named.name = graphqlType.name
+                    type.type = named;
+                    ast.type = questionToken ? type : new graphql.NonNullTypeNode(type)
+                }
+                if (type instanceof graphql.NamedTypeNode) {
+                    const type = new graphql.NamedTypeNode();
+                    type.name = graphqlType.name;
+                    ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
+                }
             }
             if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
             if (_current === 'Query') {
@@ -371,7 +383,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
             }
         }
     }
-    private createGraphqlType(node: graphql.NamedTypeNode, context: CompilerContext) {
+    private createGraphqlType(node: graphql.NamedTypeNode | graphql.ListTypeNode, context: CompilerContext) {
         const type = this.createGraphqlNamedTypeNode(node);
         if (type.name) {
             if (type.name.__type) {
@@ -1017,15 +1029,30 @@ export class TsGraphqlVisitor implements ast.Visitor {
         if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
         return ast;
     }
-    visitTypeReferenceNode(node: ast.TypeReferenceNode, context?: any) {
+    visitTypeReferenceNode(node: ast.TypeReferenceNode, context?: any): graphql.ListTypeNode | graphql.NamedTypeNode | graphql.NonNullTypeNode {
         const { typeName, typeArguments } = node.toJson(this, context);
-        const ast = new graphql.NamedTypeNode();
-        ast.name = typeName;
         if (typeName) {
             if (typeArguments && typeArguments.length > 0 && ['Promise', 'AsyncIterator', 'Observable'].includes(typeName.value)) {
-                ast.name = this.getGraphqlNamedTypeName(typeArguments[0])
+                const named = typeArguments[0];
+                if (named) {
+                    if (named instanceof graphql.ListTypeNode) {
+                        return named;
+                    } else if (named instanceof graphql.NamedTypeNode) {
+                        return named;
+                    } else if (named instanceof graphql.NameNode) {
+                        const ast = new graphql.NamedTypeNode();
+                        ast.name = named;
+                        return ast;
+                    } else if (named instanceof graphql.NonNullTypeNode) {
+                        const ast = new graphql.NamedTypeNode();
+                        ast.name = this.getGraphqlNamedTypeName(named)
+                        return ast;
+                    }
+                }
             }
         }
+        const ast = new graphql.NamedTypeNode();
+        ast.name = typeName;
         return ast;
     }
     checkNamedType(node: any, context: CompilerContext) {
@@ -1046,11 +1073,17 @@ export class TsGraphqlVisitor implements ast.Visitor {
         } else if (node instanceof graphql.ListTypeNode) {
             return this.getGraphqlNamedTypeName(node.type)
         } else {
+            debugger;
             return new graphql.NameNode(`Undefined`);
         }
     }
-    createGraphqlNamedTypeNode(node: graphql.NameNode | graphql.NamedTypeNode) {
+    createGraphqlNamedTypeNode(node: graphql.NameNode | graphql.NamedTypeNode | graphql.ListTypeNode) {
         if (node instanceof graphql.NamedTypeNode) {
+            const name = this.getGraphqlNamedTypeName(node);
+            const ast = new graphql.NamedTypeNode()
+            ast.name = name;
+            return ast;
+        } else if (node instanceof graphql.ListTypeNode) {
             const name = this.getGraphqlNamedTypeName(node);
             const ast = new graphql.NamedTypeNode()
             ast.name = name;

@@ -1,7 +1,6 @@
 import { DecoratorVisitor } from '../interfaces/decorator';
 import * as ast from '@nger/ast_ts';
 import * as astTs from '@nger/ast_ts';
-
 import * as ts from 'typescript';
 import { CompilerContext } from '../compiler';
 import * as graphql from '@nger/ast.graphql';

@@ -4,6 +4,7 @@ scalar Json
 
 type Demo3Result {
   title: String!
+  demo2: Demo2!
   desc: String!
 }
 
@@ -15,19 +16,21 @@ input Demo2Input {
 
 interface Demo3 {
   title: String!
+  demo2: Demo2!
   desc: String!
 }
 
 type DemoGraphql implements Demo3 {
   """title"""
   title: String!
+  demo2: Demo2!
   """desc"""
   desc: String!
 }
 
 type Query {
   """get demo"""
-  getDemo(input: String!): Demo3Result!
+  getDemo(input: String!): [Demo3Result]!
 }
 
 type Mutation {
