@@ -3,9 +3,10 @@ scalar Date
 scalar Json
 
 type Demo3Result {
-  """demo3 title"""
-  title: String!
+  title: String
   demo2: Demo2!
+  title2: String
+  title3: String
 }
 
 input Demo2Input {
