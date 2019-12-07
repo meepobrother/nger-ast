@@ -14,6 +14,8 @@ export class CompilerContext {
     mutation: graphql.FieldDefinitionNode[][] = [];
     subscription: graphql.FieldDefinitionNode[][] = [];
 
+    typeArguments: any[];
+
     get statements() {
         const statements: Map<string, any> = new Map();
         const push = (stats: any[]) => stats.map(it => {

@@ -437,6 +437,10 @@ export class NamedTypeNode extends Node {
         isClass: true
     })
     name: NameNode;
+    constructor(name?: NameNode) {
+        super();
+        if (name) this.name = name;
+    }
     visit(visitor: Visitor, context?: any) {
         return visitor.visitNamedTypeNode(this, context)
     }
@@ -780,6 +784,10 @@ export class ListTypeNode extends Node {
         isClass: true
     })
     type: TypeNode;
+    constructor(node?: TypeNode) {
+        super();
+        if (node) this.type = node;
+    }
     visit(visitor: Visitor, context?: any) {
         return visitor.visitListTypeNode(this, context)
     }
@@ -946,6 +954,8 @@ export class ObjectTypeDefinitionNode extends Node {
         isClass: true
     })
     fields?: FieldDefinitionNode[];
+    @PlainPro({ isClass: true })
+    typeParameters: TypeParameter[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitObjectTypeDefinitionNode(this, context)
     }
@@ -989,6 +999,10 @@ export class FieldDefinitionNode extends Node {
         isClass: true
     })
     directives?: DirectiveNode[];
+    @PlainPro()
+    child: any;
+    @PlainPro()
+    __index: number;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitFieldDefinitionNode(this, context)
     }
@@ -1032,6 +1046,11 @@ export class InputValueDefinitionNode extends Node {
         isClass: true
     })
     directives?: DirectiveNode[];
+
+    @PlainPro()
+    child: any;
+    @PlainPro()
+    __index: number;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitInputValueDefinitionNode(this, context)
     }
@@ -1046,6 +1065,14 @@ export class InputValueDefinitionNode extends Node {
             defaultValue: visitor.visit(this.defaultValue, context),
         }
     }
+}
+
+@Plain()
+export class TypeParameter {
+    @PlainPro({ isClass: true })
+    default: TypeNode;
+    @PlainPro({ isClass: true })
+    name: NameNode;
 }
 @Plain({
     desc: `InterfaceTypeDefinition`
@@ -1075,6 +1102,8 @@ export class InterfaceTypeDefinitionNode extends Node {
         isClass: true
     })
     fields?: FieldDefinitionNode[];
+    @PlainPro({ isClass: true })
+    typeParameters: TypeParameter[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitInterfaceTypeDefinitionNode(this, context)
     }

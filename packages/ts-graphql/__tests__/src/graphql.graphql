@@ -2,44 +2,21 @@ scalar Date
 
 scalar Json
 
-type Demo2 {
-  """demo2 title"""
-  title: String!
-  desc: String!
-}
-
 type Demo3 {
-  title: String
-  demo2: Demo2!
-  title2: String
-  title3: String
+  username: String!
+  title: String!
 }
 
-input Demo2Input {
-  """demo2 title"""
-  title: String!
-  desc: String!
+type Demo2Demo3 {
+  instance: Demo3!
 }
 
-type DemoGraphql {
-  """title"""
-  title: String!
-  demo2: Demo2!
-  """desc"""
-  desc: String!
+type Demo2Demo2Demo3 {
+  instance: [Demo2Demo3]!
 }
 
 type Query {
-  """get demo"""
-  getDemo(input: String!): [Demo3]!
-}
-
-type Mutation {
-  """get demo2"""
-  getDemo2(title: Demo2Input): Demo3!
-}
-
-type Subscription {
-  """get demo3"""
-  getDemo3: Json!
+  getDemo2: Demo2Demo3!
+  getDemo1: Demo2Demo3!
+  getDemo: [Demo2Demo2Demo3]!
 }

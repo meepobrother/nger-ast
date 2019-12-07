@@ -4,13 +4,6 @@ import * as ts from 'typescript';
 import { CompilerContext } from '../compiler';
 import * as graphql from '@nger/ast.graphql';
 export class NestDecoratorVisitor implements DecoratorVisitor {
-    private handlerType(type: ts.Type, visitor: ast.Visitor, context: CompilerContext) {
-        const symbol = type.symbol || type.aliasSymbol;
-        if (symbol) {
-            const symbolAst = context.create(symbol);
-            if (symbolAst && typeof symbolAst.visit === 'function') return symbolAst.visit(visitor, context);
-        }
-    }
     Module(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         if (decorator.arguments) {
             decorator.arguments.forEach(it => {
@@ -21,7 +14,10 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                             if (Array.isArray(values)) {
                                 values.map(value => {
                                     const { __type: type } = value;
-                                    this.handlerType(type, visitor, context)
+                                    const ast = context.create(type.aliasSymbol || type.symbol || type)
+                                    if (ast) {
+                                        ast.visit(visitor, context)
+                                    }
                                 })
                             }
                         }
@@ -31,29 +27,24 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         }
     }
     Controller(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
-        const { name, members, heritageClauses } = node.toJson(visitor, context)
         const ast = new graphql.ObjectTypeDefinitionNode();
-        ast.name = name;
-        ast.fields = members;
-        if (heritageClauses) {
+        if (node.name) {
+            ast.name = node.name.visit(visitor, context);
+        }
+        if (node.members) {
+            ast.fields = node.members.map(it => {
+                return it.visit(visitor, context)
+            });
+        }
+        if (node.heritageClauses) {
+            const heritageClauses = node.heritageClauses.map(it => it.visit(visitor, context))
             ast.interfaces = [];
             heritageClauses.map((it: any) => {
-                if (it.token === ts.SyntaxKind.ImplementsKeyword) {
-                    it.types.map((type: any) => {
-                        // const field = this.handlerType(type.__type, visitor, context)
-                        // if (field) {
-                        // context.setStatements([field])
-                        // }
-                        // if (Array.isArray(ast.interfaces)) {
-                        // ast.interfaces.push(type)
-                        // }
-                    })
-                } else {
-                    // extends 要管啊
+                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
+                    debugger;
                 }
             })
         }
-        context.setStatements([ast])
     }
     Injectable(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         throw new Error("Method not implemented.");
@@ -70,9 +61,21 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         context.setStatements([scalar])
     }
     Magnus(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
-        throw new Error("Method not implemented.");
+        const { name, members, heritageClauses } = node.toJson(visitor, context)
+        debugger;
+        const ast = new graphql.ObjectTypeDefinitionNode();
+        ast.name = name;
+        ast.fields = members;
+        if (heritageClauses) {
+            ast.interfaces = [];
+            heritageClauses.map((it: any) => {
+                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
+                    debugger;
+                }
+            })
+        }
     }
     Entity(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         throw new Error("Method not implemented.");
     }
-} 
+}

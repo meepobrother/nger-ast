@@ -1,7 +1,6 @@
 import * as ast from '@nger/ast.tsc';
 import { CompilerContext } from '../compiler';
 import * as graphql from '@nger/ast.graphql'
-import * as ts from 'typescript';
 export interface DecoratorHandler {
     (node: any, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void;
 }

@@ -1,79 +1,26 @@
-import { Query, Mutation, Subscription } from '@nestjs/graphql';
+import { Query } from '@nestjs/graphql';
 import { Controller } from '@nestjs/common';
-import { Demo } from '@nger/ast.core';
-export interface Demo10 {
+interface Base { 
     title: string;
 }
-export interface Demo0 {
-    /**
-     * demo0 desc
-     */
-    desc: string;
+interface Demo3 extends Base {
+    username: string;
 }
-
-export interface Demo2 extends Demo0 {
-    /**
-     * demo2 title
-     */
-    title: string;
+interface Demo2<Entity = any> {
+    instance: Entity;
 }
-export interface Demo3 extends Demo {
-    /**
-     * demo3 title
-     */
-    title: string;
-    demo2: Demo2;
-}
-
-export enum DemoEnum {
-    Demo4 = 1,
-    Demo5 = 2
-}
-
 @Controller()
 export class DemoGraphql {
-    /**
-     * title
-     * @return Number
-     */
-    title: string;
-
-    demo2: Demo2;
-    /**
-     * desc
-     */
-    desc: string;
-    /**
-     * get demo
-     * @return {Number}
-     */
     @Query()
-    async getDemo(input: string): Promise<Demo3[]> {
-        return [{
-            title: 'title',
-            demo2: {
-                desc: ``,
-                title: ``
-            }
-        }]
+    async getDemo2(): Promise<Demo2<Demo3[]>> {
+        return {} as any;
     }
-
-    /**
-     * get demo2 
-     * @param {String} title  返回值
-     * @return {String}
-     */
-    @Mutation()
-    async getDemo2(title: Demo2): Promise<Demo3> {
-        return {} as any
+    @Query()
+    async getDemo1(): Promise<Demo2<Demo3>> {
+        return {} as any;
     }
-
-    /**
-     * get demo3
-     * @return {Demo0}
-     */
-    @Subscription()
-    getDemo3(): AsyncIterator<any> {
+    @Query()
+    async getDemo(): Promise<Demo2<Demo2<Demo3>[]>[]> {
         return {} as any;
     }
 }

@@ -3134,6 +3134,7 @@ export class PropertySymbol extends Node {
         return visitor.visitPropertySymbol(this, context)
     }
 }
+export class PropertyType { }
 @Plain({
     desc: { flags: ts.SymbolFlags.EnumMember }
 })
@@ -3154,8 +3155,16 @@ export class EnumMemberSymbol extends Node {
     desc: { flags: ts.SymbolFlags.Function }
 })
 export class FunctionSymbol extends Node {
+    @PlainPro({ isClass: true })
+    declarations: FunctionDeclaration[];
     @PlainPro()
     flags: ts.SymbolFlags.Function;
+    @PlainPro()
+    id: number;
+    @PlainPro()
+    name: string;
+    @PlainPro({ isClass: true })
+    valueDeclaration: FunctionDeclaration;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitFunctionSymbol(this, context)
     }
@@ -3164,12 +3173,16 @@ export class FunctionSymbol extends Node {
     desc: { flags: ts.SymbolFlags.Class }
 })
 export class ClassSymbol extends Node {
+    @PlainPro({ isClass: true })
+    declarations: ClassDeclaration[];
     @PlainPro()
     flags: ts.SymbolFlags.Class;
     @PlainPro()
     escapedName: string;
     @PlainPro()
     name: string;
+    @PlainPro()
+    id: number;
     @PlainPro()
     members: Map<string, ts.Symbol>;
     @PlainPro({ isClass: true })
@@ -3342,6 +3355,10 @@ export class TypeParameterSymbol extends Node {
     name: string;
     @PlainPro()
     escapedName: string;
+    @PlainPro({ isClass: true })
+    declarations: Node[];
+    @PlainPro()
+    id: number;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitTypeParameterSymbol(this, context)
     }
@@ -3771,6 +3788,10 @@ export class Type {
     @PlainPro({ isClass: true })
     aliasTypeArguments?: Type[];
 }
+
+
+export class ObjectType { }
+export class TypeReference { }
 
 // visit\(visitor: Visitor, context\?: any\) \{ \}
 export interface Visitor {
