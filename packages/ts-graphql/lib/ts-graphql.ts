@@ -6,8 +6,6 @@ import { join, dirname, extname } from 'path';
 import * as ts from 'typescript';
 import { existsSync } from 'fs';
 import { DecoratorVisitor } from './interfaces/decorator';
-import { TypeNode } from './typeReference';
-import { createTypeNode, getTypeName, getType } from './handlers/util';
 import * as tsGraphqlAst from './ast';
 
 export class TsGraphqlContext {
@@ -1003,7 +1001,8 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return new tsGraphqlAst.ConstructorTypeNode(node, this, context)
     }
     visitIndexSignatureDeclaration(node: ast.IndexSignatureDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
+        const { parameters, type, name, locals, questionToken, modifiers, typeParameters } = node.toJson(this, context);
+        debugger;
     }
     visitMethodSignature(node: ast.MethodSignature, context?: any) {
         const { name, type, parameters, typeParameters, questionToken } = node.toJson(this, context);
@@ -1018,18 +1017,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return () => { };
     }
     visitTypeAliasDeclaration(node: ast.TypeAliasDeclaration, context: CompilerContext) {
-        const { name, type, typeParameters } = node.toJson(this, context);
-        const ast = new graphql.UnionTypeDefinitionNode();
-        ast.name = name;
-        if (type) {
-            ast.types = type.filter((it: any) => !!it);
-        }
-        if (Array.isArray(type)) {
-            // type.map(it => this.checkNamedType(it, context))
-            // debugger;
-        }
-        context.setStatements([ast]);
-        return ast;
+        return new tsGraphqlAst.TypeAliasDeclaration(node, this, context)
     }
     visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext): any {
         const { name, members } = node.toJson(this, context);
@@ -1119,12 +1107,11 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ast.type = questionToken ? type : new graphql.NonNullTypeNode(
             type
         );
-        if (type instanceof TypeNode) {
+        if (type instanceof tsGraphqlAst.TypeNode) {
             let typeNode = type.getType();
             ast.type = questionToken ? typeNode as any : new graphql.NonNullTypeNode(
                 typeNode
             );
-            ast.child = type;
             if (jsDoc) ast.description = this.mergeJsDoc(jsDoc.flat());
             return ast;
         }
@@ -1204,8 +1191,8 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const ast = new graphql.FieldDefinitionNode();
         ast.name = name;
         ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
-        if (type instanceof TypeNode) {
-            const graphqlType = type.createInputObjectTypeDefinitionNode();
+        if (type instanceof tsGraphqlAst.TypeNode) {
+            const graphqlType = type.getType();
             type = type.getType();
             ast.type = questionToken ? type : new graphql.NonNullTypeNode(type);
             if (graphqlType) {
@@ -1244,10 +1231,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return new tsGraphqlAst.TypeReferenceNode(node, this, context);
     }
     getGraphqlNamedTypeName(node: graphql.NamedTypeNode | graphql.NameNode | graphql.NonNullTypeNode | graphql.ListTypeNode): graphql.NameNode {
-        if (node instanceof TypeNode) {
-            // return node.getListType()
-            debugger;
-        }
         if (node instanceof graphql.NamedTypeNode) {
             return this.getGraphqlNamedTypeName(node.name);
         } else if (node instanceof graphql.NameNode) {

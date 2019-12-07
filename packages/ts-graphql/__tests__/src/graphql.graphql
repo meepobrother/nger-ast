@@ -2,21 +2,24 @@ scalar Date
 
 scalar Json
 
-type Demo3 {
+type User {
   username: String!
-  title: String!
+  password: String!
 }
 
-type Demo2Demo3 {
-  instance: Demo3!
+type UserPartial {
+  username: String
+  password: String
 }
 
-type Demo2Demo2Demo3 {
-  instance: [Demo2Demo3]!
+type UserPartialDepartment {
+  title: UserPartial
+}
+
+type UserPartialDepartmentRequired {
+  title: UserPartialDepartment!
 }
 
 type Query {
-  getDemo2: Demo2Demo3!
-  getDemo1: Demo2Demo3!
-  getDemo: [Demo2Demo2Demo3]!
+  getDepartment: UserPartialDepartmentRequired!
 }

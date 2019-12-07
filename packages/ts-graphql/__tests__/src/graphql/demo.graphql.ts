@@ -1,26 +1,19 @@
 import { Query } from '@nestjs/graphql';
 import { Controller } from '@nestjs/common';
-interface Base { 
-    title: string;
-}
-interface Demo3 extends Base {
+interface User {
     username: string;
+    password: string;
 }
-interface Demo2<Entity = any> {
-    instance: Entity;
+interface Department<T> {
+    title?: T;
 }
+type Required<T> = {
+    [P in keyof T]: T[P];
+};
 @Controller()
 export class DemoGraphql {
     @Query()
-    async getDemo2(): Promise<Demo2<Demo3[]>> {
-        return {} as any;
-    }
-    @Query()
-    async getDemo1(): Promise<Demo2<Demo3>> {
-        return {} as any;
-    }
-    @Query()
-    async getDemo(): Promise<Demo2<Demo2<Demo3>[]>[]> {
+    async getDepartment(): Promise<Required<Department<Partial<User>>>> {
         return {} as any;
     }
 }

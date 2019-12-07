@@ -657,6 +657,20 @@ export class ConstructorTypeNode extends Node {
 export class IndexSignatureDeclaration extends Node {
     @PlainPro()
     kind: ts.SyntaxKind.IndexSignature;
+    @PlainPro()
+    locals: Map<string, ts.Symbol>;
+    @PlainPro()
+    questionToken?: ts.QuestionToken;
+    @PlainPro({ isClass: true })
+    modifiers: Modifier[];
+    @PlainPro({ isClass: true })
+    name?: PropertyName;
+    @PlainPro({ isClass: true })
+    typeParameters?: TypeParameterDeclaration[];
+    @PlainPro({ isClass: true })
+    parameters: ParameterDeclaration[];
+    @PlainPro({ isClass: true })
+    type?: TypeNode;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitIndexSignatureDeclaration(this, context)
     }
