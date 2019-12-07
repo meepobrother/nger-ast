@@ -2,6 +2,11 @@ scalar Date
 
 scalar Json
 
+input UserInput {
+  username: String!
+  password: String!
+}
+
 type User {
   username: String!
   password: String!
@@ -21,5 +26,5 @@ type UserPartialDepartmentRequired {
 }
 
 type Query {
-  getDepartment: UserPartialDepartmentRequired!
+  getDepartment(user: UserInput!): UserPartialDepartmentRequired!
 }

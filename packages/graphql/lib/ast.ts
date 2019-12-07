@@ -1252,6 +1252,8 @@ export class InputObjectTypeDefinitionNode extends Node {
         isClass: true
     })
     fields?: InputValueDefinitionNode[];
+    @PlainPro({ isClass: true })
+    typeParameters: TypeParameter[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitInputObjectTypeDefinitionNode(this, context)
     }

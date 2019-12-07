@@ -408,51 +408,11 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitClassMemberSymbol(node: ast.ClassMemberSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitConditionalTypeNode(node: ast.ConditionalTypeNode, context: any) {
-        return new tsGraphqlAst.ConditionalTypeNode(node, this, context)
-    }
-    visitInferTypeNode(node: ast.InferTypeNode, context: any) {
-        return new tsGraphqlAst.InferTypeNode(node, this, context)
-    }
-    visitUnionTypeNode(node: ast.UnionTypeNode, context: CompilerContext) {
-        return new tsGraphqlAst.UnionTypeNode(node, this, context)
-    }
-    visitIntersectionTypeNode(node: ast.IntersectionTypeNode, context: any) {
-        return new tsGraphqlAst.IntersectionTypeNode(node, this, context)
-    }
-    visitIndexedAccessTypeNode(node: ast.IndexedAccessTypeNode, context: any) {
-        return new tsGraphqlAst.IndexedAccessTypeNode(node, this, context)
-    }
+
     visitRegularExpressionLiteral(node: ast.RegularExpressionLiteral, context: any) {
         throw new Error("Method not implemented.");
     }
-    visitLiteralTypeNode(node: ast.LiteralTypeNode, context: any) {
-        return new tsGraphqlAst.LiteralTypeNode(node, this, context)
-    }
-    visitTypeQueryNode(node: ast.TypeQueryNode, context: any) {
-        return new tsGraphqlAst.TypeQueryNode(node, this, context)
-    }
-    visitJSDocAllType(node: ast.JSDocAllType, context: any) {
-        return new tsGraphqlAst.JSDocAllType(node, this, context)
-    }
-    visitJSDocUnknownType(node: ast.JSDocUnknownType, context: any) {
-        return new tsGraphqlAst.JSDocUnknownType(node, this, context)
-    }
-    visitJSDocNamepathType(node: ast.JSDocNamepathType, context: any) {
-        return new tsGraphqlAst.JSDocNamepathType(node, this, context)
-    }
-    visitArrayTypeNode(node: ast.ArrayTypeNode, context: any) {
-        return new tsGraphqlAst.ArrayTypeNode(node, this, context)
-    }
-    visitTupleTypeNode(node: ast.TupleTypeNode, context: any) {
-        return new tsGraphqlAst.TupleTypeNode(node, this, context)
-    }
-    visitOptionalTypeNode(node: ast.OptionalTypeNode, context: any) {
-        return new tsGraphqlAst.OptionalTypeNode(node, this, context)
-    }
-    visitRestTypeNode(node: ast.RestTypeNode, context: any) {
-        return new tsGraphqlAst.RestTypeNode(node, this, context)
-    }
+
     visitModifier(node: ast.Modifier, context?: any) {
         const { kind } = node;
         switch (kind) {
@@ -502,12 +462,11 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitJSDocEnumTag(node: ast.JSDocEnumTag, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitParenthesizedTypeNode(node: ast.ParenthesizedTypeNode, context?: any) {
-        return new tsGraphqlAst.ParenthesizedTypeNode(node, this, context)
-    }
+
     visitSetAccessorDeclaration(node: ast.SetAccessorDeclaration, context?: any) {
         throw new Error("Method not implemented.");
     }
+    isInput: boolean;
     visitMethodDeclaration(node: ast.MethodDeclaration, context: CompilerContext) {
         const { questionToken, asteriskToken } = node;
         if (node.modifiers) {
@@ -533,7 +492,11 @@ export class TsGraphqlVisitor implements ast.Visitor {
                     ast.name = node.name.visit(this, context)
                 }
                 if (node.parameters) {
-                    ast.arguments = node.parameters.map(it => it.visit(this, context));
+                    ast.arguments = node.parameters.map(it => {
+                        this.isInput = true;
+                        return it.visit(this, context)
+                    });
+                    this.isInput = false;
                 }
                 if (node.type) {
                     const type = node.type.visit(this, context)
@@ -916,18 +879,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const { expression } = node.toJson(this, context);
         return expression;
     }
-    visitJSDocVariadicType(node: ast.JSDocVariadicType, context?: any) {
-        return new tsGraphqlAst.JSDocVariadicType(node, this, context)
-    }
-    visitJSDocNonNullableType(node: ast.JSDocNonNullableType, context?: any) {
-        return new tsGraphqlAst.JSDocNonNullableType(node, this, context)
-    }
-    visitJSDocNullableType(node: ast.JSDocNullableType, context?: any) {
-        return new tsGraphqlAst.JSDocNullableType(node, this, context)
-    }
-    visitTypeOperatorNode(node: ast.TypeOperatorNode, context?: any) {
-        return new tsGraphqlAst.TypeOperatorNode(node, this, context)
-    }
+
     visitTypeParameterDeclaration(node: ast.TypeParameterDeclaration, context?: any) {
         const { name, constraint, default: _def, expression } = node.toJson(this, context);
         const ast = new graphql.TypeParameter()
@@ -935,15 +887,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ast.default = _def;
         return ast;
     }
-    visitMappedTypeNode(node: ast.MappedTypeNode, context?: any) {
-        return new tsGraphqlAst.MappedTypeNode(node, this, context);
-    }
-    visitTypePredicateNode(node: ast.TypePredicateNode, context?: any) {
-        return new tsGraphqlAst.TypePredicateNode(node, this, context);
-    }
-    visitThisTypeNode(node: ast.ThisTypeNode, context?: any) {
-        return new tsGraphqlAst.ThisTypeNode(node, this, context)
-    }
+
     visitExternalModuleReference(node: ast.ExternalModuleReference, context?: any) {
         throw new Error("Method not implemented.");
     }
@@ -953,13 +897,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     visitExportDeclaration(node: ast.ExportDeclaration, context: CompilerContext) {
         const { exportClause, moduleSpecifier } = node.toJson(this, context);
-        // const sourceFilePath = this.transformPath(moduleSpecifier.value, context)
-        // const sourceFile = context.getSourceFile(sourceFilePath);
-        // if (sourceFile) {
-        //     const ctx = new CompilerContext(context);
-        //     this.visitSourceFile(sourceFile, ctx);
-        //     context.addChildren(moduleSpecifier.value, ctx)
-        // };
     }
     visitExportSpecifier(node: ast.ExportSpecifier, context: CompilerContext) {
         const exp = context.typeChecker.getExportSpecifierLocalTargetSymbol(node.__node as any)
@@ -991,15 +928,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
         return;
     }
-    visitJSDocFunctionType(node: ast.JSDocFunctionType, context?: any) {
-        return new tsGraphqlAst.JSDocFunctionType(node, this, context)
-    }
-    visitFunctionTypeNode(node: ast.FunctionTypeNode, context?: any) {
-        return new tsGraphqlAst.FunctionTypeNode(node, this, context)
-    }
-    visitConstructorTypeNode(node: ast.ConstructorTypeNode, context: any) {
-        return new tsGraphqlAst.ConstructorTypeNode(node, this, context)
-    }
+
     visitIndexSignatureDeclaration(node: ast.IndexSignatureDeclaration, context?: any) {
         const { parameters, type, name, locals, questionToken, modifiers, typeParameters } = node.toJson(this, context);
         debugger;
@@ -1016,9 +945,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitArrowFunction(node: ast.ArrowFunction, context?: any) {
         return () => { };
     }
-    visitTypeAliasDeclaration(node: ast.TypeAliasDeclaration, context: CompilerContext) {
-        return new tsGraphqlAst.TypeAliasDeclaration(node, this, context)
-    }
+
     visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext): any {
         const { name, members } = node.toJson(this, context);
         const ast = new graphql.EnumTypeDefinitionNode();
@@ -1037,9 +964,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitJSDocCallbackTag(node: ast.JSDocCallbackTag, context: CompilerContext) {
         throw new Error("Method not implemented.");
     }
-    visitJSDocTypeExpression(node: ast.JSDocTypeExpression, context: CompilerContext) {
-        return new tsGraphqlAst.JSDocTypeExpression(node, this, context)
-    }
+
     visitJSDocTemplateTag(node: ast.JSDocTemplateTag, context: CompilerContext) {
         throw new Error("Method not implemented.");
     }
@@ -1097,9 +1022,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitJSDocTypedefTag(node: ast.JSDocTypedefTag, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitTypeLiteralNode(node: ast.TypeLiteralNode, context?: any) {
-        return new tsGraphqlAst.TypeLiteralNode(node, this, context)
-    }
+
     visitPropertySignature(node: ast.PropertySignature, context: CompilerContext) {
         const { name, type, questionToken, initializer, jsDoc } = node.toJson(this, context);
         const ast = new graphql.FieldDefinitionNode();
@@ -1227,9 +1150,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
             return this.getNamedName(node.type)
         }
     }
-    visitTypeReferenceNode(node: ast.TypeReferenceNode, context: CompilerContext) {
-        return new tsGraphqlAst.TypeReferenceNode(node, this, context);
-    }
+
     getGraphqlNamedTypeName(node: graphql.NamedTypeNode | graphql.NameNode | graphql.NonNullTypeNode | graphql.ListTypeNode): graphql.NameNode {
         if (node instanceof graphql.NamedTypeNode) {
             return this.getGraphqlNamedTypeName(node.name);
@@ -1273,9 +1194,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ast.value = node.escapedText;
         return ast;
     }
-    visitKeywordTypeNode(node: ast.KeywordTypeNode, context: CompilerContext) {
-        return new tsGraphqlAst.KeywordTypeNode(node, this, context)
-    }
+
     visitConstructorDeclaration(node: ast.ConstructorDeclaration, context?: any) {
         const { } = node.toJson(this, context, 'body');
     }
@@ -1305,10 +1224,102 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const { statements } = node.toJson(this, context);
         return statements;
     }
-    visitJSDocOptionalType(node: ast.JSDocOptionalType, context?: any) {
-        return new tsGraphqlAst.JSDocOptionalType(node, this, context)
-    }
+
     visitExportAssignment(node: ast.ExportAssignment, context?: any) {
         throw new Error("Method not implemented.");
+    }
+    // type
+    visitJSDocOptionalType(node: ast.JSDocOptionalType, context?: any) {
+        return new tsGraphqlAst.JSDocOptionalType(node, this, context, this.isInput)
+    }
+    visitConditionalTypeNode(node: ast.ConditionalTypeNode, context: any) {
+        return new tsGraphqlAst.ConditionalTypeNode(node, this, context, this.isInput)
+    }
+    visitInferTypeNode(node: ast.InferTypeNode, context: any) {
+        return new tsGraphqlAst.InferTypeNode(node, this, context, this.isInput)
+    }
+    visitUnionTypeNode(node: ast.UnionTypeNode, context: CompilerContext) {
+        return new tsGraphqlAst.UnionTypeNode(node, this, context, this.isInput)
+    }
+    visitIntersectionTypeNode(node: ast.IntersectionTypeNode, context: any) {
+        return new tsGraphqlAst.IntersectionTypeNode(node, this, context, this.isInput)
+    }
+    visitIndexedAccessTypeNode(node: ast.IndexedAccessTypeNode, context: any) {
+        return new tsGraphqlAst.IndexedAccessTypeNode(node, this, context, this.isInput)
+    }
+    visitLiteralTypeNode(node: ast.LiteralTypeNode, context: any) {
+        return new tsGraphqlAst.LiteralTypeNode(node, this, context, this.isInput)
+    }
+    visitTypeQueryNode(node: ast.TypeQueryNode, context: any) {
+        return new tsGraphqlAst.TypeQueryNode(node, this, context, this.isInput)
+    }
+    visitJSDocAllType(node: ast.JSDocAllType, context: any) {
+        return new tsGraphqlAst.JSDocAllType(node, this, context, this.isInput)
+    }
+    visitJSDocUnknownType(node: ast.JSDocUnknownType, context: any) {
+        return new tsGraphqlAst.JSDocUnknownType(node, this, context, this.isInput)
+    }
+    visitJSDocNamepathType(node: ast.JSDocNamepathType, context: any) {
+        return new tsGraphqlAst.JSDocNamepathType(node, this, context, this.isInput)
+    }
+    visitArrayTypeNode(node: ast.ArrayTypeNode, context: any) {
+        return new tsGraphqlAst.ArrayTypeNode(node, this, context, this.isInput)
+    }
+    visitTupleTypeNode(node: ast.TupleTypeNode, context: any) {
+        return new tsGraphqlAst.TupleTypeNode(node, this, context, this.isInput)
+    }
+    visitOptionalTypeNode(node: ast.OptionalTypeNode, context: any) {
+        return new tsGraphqlAst.OptionalTypeNode(node, this, context, this.isInput)
+    }
+    visitRestTypeNode(node: ast.RestTypeNode, context: any) {
+        return new tsGraphqlAst.RestTypeNode(node, this, context, this.isInput)
+    }
+    visitParenthesizedTypeNode(node: ast.ParenthesizedTypeNode, context?: any) {
+        return new tsGraphqlAst.ParenthesizedTypeNode(node, this, context, this.isInput)
+    }
+    visitKeywordTypeNode(node: ast.KeywordTypeNode, context: CompilerContext) {
+        return new tsGraphqlAst.KeywordTypeNode(node, this, context, this.isInput)
+    }
+    visitTypeReferenceNode(node: ast.TypeReferenceNode, context: CompilerContext) {
+        return new tsGraphqlAst.TypeReferenceNode(node, this, context, this.isInput);
+    }
+    visitTypeLiteralNode(node: ast.TypeLiteralNode, context?: any) {
+        return new tsGraphqlAst.TypeLiteralNode(node, this, context, this.isInput)
+    }
+    visitJSDocTypeExpression(node: ast.JSDocTypeExpression, context: CompilerContext) {
+        return new tsGraphqlAst.JSDocTypeExpression(node, this, context, this.isInput)
+    }
+    visitTypeAliasDeclaration(node: ast.TypeAliasDeclaration, context: CompilerContext) {
+        return new tsGraphqlAst.TypeAliasDeclaration(node, this, context, this.isInput)
+    }
+    visitJSDocFunctionType(node: ast.JSDocFunctionType, context?: any) {
+        return new tsGraphqlAst.JSDocFunctionType(node, this, context, this.isInput)
+    }
+    visitFunctionTypeNode(node: ast.FunctionTypeNode, context?: any) {
+        return new tsGraphqlAst.FunctionTypeNode(node, this, context, this.isInput)
+    }
+    visitConstructorTypeNode(node: ast.ConstructorTypeNode, context: any) {
+        return new tsGraphqlAst.ConstructorTypeNode(node, this, context, this.isInput)
+    }
+    visitMappedTypeNode(node: ast.MappedTypeNode, context?: any) {
+        return new tsGraphqlAst.MappedTypeNode(node, this, context, this.isInput);
+    }
+    visitTypePredicateNode(node: ast.TypePredicateNode, context?: any) {
+        return new tsGraphqlAst.TypePredicateNode(node, this, context, this.isInput);
+    }
+    visitThisTypeNode(node: ast.ThisTypeNode, context?: any) {
+        return new tsGraphqlAst.ThisTypeNode(node, this, context, this.isInput)
+    }
+    visitJSDocVariadicType(node: ast.JSDocVariadicType, context?: any) {
+        return new tsGraphqlAst.JSDocVariadicType(node, this, context, this.isInput)
+    }
+    visitJSDocNonNullableType(node: ast.JSDocNonNullableType, context?: any) {
+        return new tsGraphqlAst.JSDocNonNullableType(node, this, context, this.isInput)
+    }
+    visitJSDocNullableType(node: ast.JSDocNullableType, context?: any) {
+        return new tsGraphqlAst.JSDocNullableType(node, this, context, this.isInput)
+    }
+    visitTypeOperatorNode(node: ast.TypeOperatorNode, context?: any) {
+        return new tsGraphqlAst.TypeOperatorNode(node, this, context, this.isInput)
     }
 }

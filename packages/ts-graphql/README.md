@@ -20,7 +20,7 @@ type Required<T> = {
 @Controller()
 export class DemoGraphql {
     @Query()
-    async getDepartment(): Promise<Required<Department<Partial<User>>>> {
+    async getDepartment(user: User): Promise<Required<Department<Partial<User>>>> {
         return {} as any;
     }
 }
@@ -31,6 +31,11 @@ export class DemoGraphql {
 scalar Date
 
 scalar Json
+
+input UserInput {
+  username: String!
+  password: String!
+}
 
 type User {
   username: String!
@@ -51,6 +56,7 @@ type UserPartialDepartmentRequired {
 }
 
 type Query {
-  getDepartment: UserPartialDepartmentRequired!
+  getDepartment(user: UserInput!): UserPartialDepartmentRequired!
 }
+
 ```
