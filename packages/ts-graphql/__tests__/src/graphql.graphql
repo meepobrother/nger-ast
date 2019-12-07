@@ -2,29 +2,41 @@ scalar Date
 
 scalar Json
 
+"""用户"""
 input UserInput {
+  """用户名"""
   username: String!
+  """密码"""
   password: String!
 }
 
+"""用户"""
 type User {
+  """用户名"""
   username: String!
+  """密码"""
   password: String!
 }
 
 type UserPartial {
+  """用户名"""
   username: String
+  """密码"""
   password: String
 }
 
+"""部门"""
 type UserPartialDepartment {
+  """部门名称"""
   title: UserPartial
 }
 
 type UserPartialDepartmentRequired {
+  """部门名称"""
   title: UserPartialDepartment!
 }
 
 type Query {
+  """get department"""
   getDepartment(user: UserInput!): UserPartialDepartmentRequired!
 }

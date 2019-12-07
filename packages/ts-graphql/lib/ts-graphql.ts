@@ -1054,9 +1054,12 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return arrs;
     }
     visitInterfaceDeclaration(node: ast.InterfaceDeclaration, context: CompilerContext): any {
-        let { members, name, typeParameters, heritageClauses, type, questionToken } = node.toJson(this, context);
+        let { members, name, typeParameters, heritageClauses, jsDoc, type, questionToken } = node.toJson(this, context);
         const ast = new graphql.ObjectTypeDefinitionNode();
         ast.name = name;
+        if (jsDoc) {
+            ast.description = this.mergeJsDoc(jsDoc.flat())
+        }
         if (Array.isArray(heritageClauses)) {
             ast.interfaces = [];
             heritageClauses.map((it: any) => {

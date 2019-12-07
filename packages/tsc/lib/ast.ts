@@ -1239,6 +1239,8 @@ export class InterfaceDeclaration extends Node {
         isClass: true
     })
     members: TypeElement[];
+    @PlainPro({ isClass: true })
+    jsDoc: JSDoc[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitInterfaceDeclaration(this, context)
     }
