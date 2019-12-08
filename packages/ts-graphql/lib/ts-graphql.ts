@@ -7,6 +7,7 @@ import * as ts from 'typescript';
 import { existsSync } from 'fs';
 import { DecoratorVisitor } from './interfaces/decorator';
 import * as tsGraphqlAst from './ast';
+import { createNameNode } from './handlers/util';
 
 export class TsGraphqlContext {
     graphql: graphql.DocumentNode = new graphql.DocumentNode();
@@ -18,9 +19,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     visits(nodes?: ast.Node[] | undefined, context?: any) {
         return nodes ? nodes.map(it => this.visit(it, context)) : [];
-    }
-    visitNoneSymbol(node: ast.NoneSymbol, context?: any) {
-        throw new Error("Method not implemented.");
     }
     visitFunctionScopedVariableSymbol(node: ast.FunctionScopedVariableSymbol, context?: any) {
         throw new Error("Method not implemented.");
@@ -56,7 +54,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
     }
     handlerType(type: ts.Type, visitor: ast.Visitor, context: CompilerContext) {
-        const symbol = type.symbol || type.aliasSymbol;
+        const symbol = (type as any).declaredType || type.symbol || type.aliasSymbol;
         if (symbol) {
             const symbolAst = context.create(symbol);
             if (symbolAst && typeof symbolAst.visit === 'function') return symbolAst.visit(visitor, context);
@@ -354,9 +352,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitParameterExcludesSymbol(node: ast.ParameterExcludesSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitPropertyExcludesSymbol(node: ast.PropertyExcludesSymbol, context?: any) {
-        throw new Error("Method not implemented.");
-    }
     visitEnumMemberExcludesSymbol(node: ast.EnumMemberExcludesSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
@@ -376,9 +371,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
         throw new Error("Method not implemented.");
     }
     visitValueModuleExcludesSymbol(node: ast.ValueModuleExcludesSymbol, context?: any) {
-        throw new Error("Method not implemented.");
-    }
-    visitNamespaceModuleExcludesSymbol(node: ast.NamespaceModuleExcludesSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
     visitMethodExcludesSymbol(node: ast.MethodExcludesSymbol, context?: any) {
@@ -485,9 +477,9 @@ export class TsGraphqlVisitor implements ast.Visitor {
             const decorators = this.visits(node.decorators, context);
             const needDecorators = ['Query', 'Mutation', 'Subscription'];
             let _current: any;
-            const needCreate = decorators && decorators.map((it: any) => it.name.value).some((it: any) => {
-                if (needDecorators.includes(it)) {
-                    _current = it;
+            const needCreate = decorators && decorators.find((it: any) => {
+                if (needDecorators.includes(it.name.value)) {
+                    _current = it.name.value;
                     return true;
                 }
                 return false;
@@ -496,6 +488,12 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 const ast = new graphql.FieldDefinitionNode()
                 if (node.name) {
                     ast.name = node.name.visit(this, context)
+                    const { arguments: args } = needCreate;
+                    if (args && args.length > 0) {
+                        if (args[0] instanceof graphql.StringValueNode) {
+                            ast.name = createNameNode(args[0].value)
+                        }
+                    }
                 }
                 if (node.parameters) {
                     ast.arguments = node.parameters.map(it => {
@@ -509,6 +507,43 @@ export class TsGraphqlVisitor implements ast.Visitor {
                     if (type instanceof tsGraphqlAst.TypeNode) {
                         const typeNode = type.getType();
                         if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
+                    }
+                } else {
+                    if (node.body) {
+                        const { statements } = node.body;
+                        const res = statements.find(it => it instanceof astTs.ReturnStatement) as astTs.ReturnStatement
+                        if (res && res.expression) {
+                            let getContextualType = context.typeChecker.getContextualType(res.expression.__node as any);
+                            if (getContextualType) {
+                                const typeNode = this.handlerType(getContextualType, this, context)
+                                if (typeNode && typeNode.visit) {
+                                    const returnType = typeNode.visit(this, context);
+                                    if (returnType instanceof tsGraphqlAst.TypeNode) {
+                                        const typeNode = returnType.getType();
+                                        if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
+                                    }
+                                }
+                            }
+                            const getResolvedSignature = context.typeChecker.getResolvedSignature(res.expression.__node as any);
+                            if (getResolvedSignature) {
+                                const type = getResolvedSignature.getDeclaration().type;
+                                if (type) {
+                                    const typeNode = context.moduleRef.create<astTs.Node>(type);
+                                    if (typeNode && typeNode.visit) {
+                                        const returnType = typeNode.visit(this, context);
+                                        if (returnType instanceof tsGraphqlAst.TypeNode) {
+                                            const typeNode = returnType.getType();
+                                            if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!ast.type) {
+                        const sourceFile = node.__node.getSourceFile();
+                        const filename = sourceFile.fileName;
+                        console.error(`missing type definition! \n${filename}:${ts.getLineAndCharacterOfPosition(sourceFile, node.__node.end).line}\n${node.__node.getText()}\n\n`)
                     }
                 }
                 if (node.jsDoc) {

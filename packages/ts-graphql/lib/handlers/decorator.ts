@@ -14,9 +14,25 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                             if (Array.isArray(values)) {
                                 values.map(value => {
                                     const { __type: type } = value;
-                                    const ast = context.create(type.aliasSymbol || type.symbol || type)
-                                    if (ast) {
-                                        ast.visit(visitor, context)
+                                    if (type) {
+                                        const ast = context.create(type.aliasSymbol || type.symbol || type)
+                                        if (ast) {
+                                            ast.visit(visitor, context)
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                        if (field.name.value === 'imports') {
+                            const values = field.value;
+                            if (Array.isArray(values)) {
+                                values.map(value => {
+                                    const { __type: type } = value;
+                                    if (type) {
+                                        const ast = context.create(type.aliasSymbol || type.symbol || type)
+                                        if (ast) {
+                                            ast.visit(visitor, context)
+                                        }
                                     }
                                 })
                             }
@@ -25,6 +41,30 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                 }
             });
         }
+        // if (node.members) {
+        //     node.members.map(member => {
+        //         if (member instanceof ast.MethodDeclaration) {
+        //             if (member.modifiers) {
+        //                 member.modifiers.map(modifier => {
+        //                     if (modifier.kind === ts.SyntaxKind.StaticKeyword) {
+        //                         const { body } = member;
+        //                         if (body) {
+        //                             const { statements } = body;
+        //                             if (statements) {
+        //                                 statements.map(statement => {
+        //                                     if (statement instanceof ast.ReturnStatement) {
+        //                                         const state = statement.visit(visitor, context)
+        //                                         debugger;
+        //                                     }
+        //                                 })
+        //                             }
+        //                         }
+        //                     }
+        //                 })
+        //             }
+        //         }
+        //     })
+        // }
     }
     Resolver(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode) { }
     Controller(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
@@ -74,7 +114,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         }
     }
     Entity(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): any {
-        return this.Class(node,visitor,context)
+        return this.Class(node, visitor, context)
     }
     Class(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext) {
         const ast = new graphql.ObjectTypeDefinitionNode();

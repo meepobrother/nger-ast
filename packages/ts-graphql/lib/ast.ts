@@ -170,6 +170,7 @@ export abstract class TypeNode {
             }
             return;
         }
+        throw new Error(`type not found`)
     }
 }
 export class KeywordTypeNode extends TypeNode {
@@ -338,7 +339,13 @@ export class ArrayTypeNode extends TypeNode {
         throw new Error("Method not implemented.");
     }
     getType(nodes?: TypeNode[]): GraphqlType {
-        const elementType = this.node.elementType.visit(this.visitor, this.context);
+        let elementType: any;
+        if (!this.node.elementType.visit) {
+            const node = this.context.create(this.node.elementType)
+            if (node) elementType = node.visit(this.visitor, this.context)
+        } else {
+            elementType = this.node.elementType.visit(this.visitor, this.context);
+        }
         if (elementType) {
             const type = elementType.getType(nodes)
             return new graphql.ListTypeNode(type);

@@ -3056,7 +3056,7 @@ export class JSDocNamepathType extends Node {
     type: TypeNode;
 }
 @Plain({
-    desc: ts.SyntaxKind.ArrayType
+    desc: { kind: ts.SyntaxKind.ArrayType }
 })
 export class ArrayTypeNode extends Node {
     visit(visitor: Visitor, context?: any) {
@@ -3103,17 +3103,8 @@ export class RestTypeNode extends Node {
     @PlainPro({ isClass: true })
     type: TypeNode;
 }
-export type Symbol = NoneSymbol | FunctionScopedVariableSymbol | BlockScopedVariableSymbol;
-@Plain({
-    desc: { flags: ts.SymbolFlags.None }
-})
-export class NoneSymbol extends Node {
-    @PlainPro()
-    flags: ts.SymbolFlags.None;
-    visit(visitor: Visitor, context?: any) {
-        return visitor.visitNoneSymbol(this, context)
-    }
-}
+export type Symbol = FunctionScopedVariableSymbol | BlockScopedVariableSymbol;
+
 @Plain({
     desc: { flags: ts.SymbolFlags.FunctionScopedVariable }
 })
@@ -3584,16 +3575,7 @@ export class ParameterExcludesSymbol extends Node {
         return visitor.visitParameterExcludesSymbol(this, context)
     }
 }
-@Plain({
-    desc: { flags: ts.SymbolFlags.PropertyExcludes }
-})
-export class PropertyExcludesSymbol extends Node {
-    @PlainPro()
-    flags: ts.SymbolFlags.PropertyExcludes;
-    visit(visitor: Visitor, context?: any) {
-        return visitor.visitPropertyExcludesSymbol(this, context)
-    }
-}
+
 @Plain({
     desc: { flags: ts.SymbolFlags.EnumMemberExcludes }
 })
@@ -3664,16 +3646,7 @@ export class ValueModuleExcludesSymbol extends Node {
         return visitor.visitValueModuleExcludesSymbol(this, context)
     }
 }
-@Plain({
-    desc: { flags: ts.SymbolFlags.NamespaceModuleExcludes }
-})
-export class NamespaceModuleExcludesSymbol extends Node {
-    @PlainPro()
-    flags: ts.SymbolFlags.NamespaceModuleExcludes;
-    visit(visitor: Visitor, context?: any) {
-        return visitor.visitNamespaceModuleExcludesSymbol(this, context)
-    }
-}
+
 @Plain({
     desc: { flags: ts.SymbolFlags.MethodExcludes }
 })
@@ -3811,7 +3784,6 @@ export class TypeReference { }
 
 // visit\(visitor: Visitor, context\?: any\) \{ \}
 export interface Visitor {
-    visitNoneSymbol(node: NoneSymbol, context?: any): any;
     visitFunctionScopedVariableSymbol(node: FunctionScopedVariableSymbol, context?: any): any;
     visitBlockScopedVariableSymbol(node: BlockScopedVariableSymbol, context?: any): any;
     visitPropertySymbol(node: PropertySymbol, context?: any): any;
@@ -3850,7 +3822,6 @@ export interface Visitor {
     visitFunctionScopedVariableExcludesSymbol(node: FunctionScopedVariableExcludesSymbol, context?: any): any;
     visitBlockScopedVariableExcludesSymbol(node: BlockScopedVariableExcludesSymbol, context?: any): any;
     visitParameterExcludesSymbol(node: ParameterExcludesSymbol, context?: any): any;
-    visitPropertyExcludesSymbol(node: PropertyExcludesSymbol, context?: any): any;
     visitEnumMemberExcludesSymbol(node: EnumMemberExcludesSymbol, context?: any): any;
     visitFunctionExcludesSymbol(node: FunctionExcludesSymbol, context?: any): any;
     visitClassExcludesSymbol(node: ClassExcludesSymbol, context?: any): any;
@@ -3858,7 +3829,6 @@ export interface Visitor {
     visitRegularEnumExcludesSymbol(node: RegularEnumExcludesSymbol, context?: any): any;
     visitConstEnumExcludesSymbol(node: ConstEnumExcludesSymbol, context?: any): any;
     visitValueModuleExcludesSymbol(node: ValueModuleExcludesSymbol, context?: any): any;
-    visitNamespaceModuleExcludesSymbol(node: NamespaceModuleExcludesSymbol, context?: any): any;
     visitMethodExcludesSymbol(node: MethodExcludesSymbol, context?: any): any;
     visitGetAccessorExcludesSymbol(node: GetAccessorExcludesSymbol, context?: any): any;
     visitSetAccessorExcludesSymbol(node: SetAccessorExcludesSymbol, context?: any): any;

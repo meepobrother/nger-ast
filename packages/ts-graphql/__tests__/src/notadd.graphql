@@ -11,7 +11,7 @@ input CatInput {
 }
 
 type Query {
-  getCats: [Cat]!
+  getCats: 
   cat(id: Int!): Cat!
 }
 

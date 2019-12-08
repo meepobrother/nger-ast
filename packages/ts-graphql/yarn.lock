@@ -10,19 +10,19 @@
     is-absolute "^1.0.0"
     is-negated-glob "^1.0.0"
 
-"@nger/ast.graphql@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@nger/ast.graphql/-/ast.graphql-1.0.4.tgz#5dd8f10fa112e80a4b2164ecd84259b26f645394"
-  integrity sha512-V/JYpRAvALZG2Cpr4CWz/INmiDnNsrAuvKbWr6PNf234X5eRwUCTQsh7cTkjv/wATfmUVsapQ4F8uekBWO10Gw==
+"@nger/ast.graphql@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@nger/ast.graphql/-/ast.graphql-1.0.5.tgz#a3019545769fb8f1256c2a09956b78f028d12fc7"
+  integrity sha512-pw1RpJ6BAcrILac0ciCCbfpMo2llkX3wHR9AhE2cQzADSMDY3KbgQA+Do5Rvhwx5sqCuScw7T9Yos9qQOKeB3w==
   dependencies:
     "@nger/decorator" "^1.0.1"
     "@nger/plain" "^1.0.27"
     typescript "^3.7.3"
 
-"@nger/ast.tsc@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@nger/ast.tsc/-/ast.tsc-1.0.3.tgz#b9833518d27fc4133f00a105e5d7b381ae30885e"
-  integrity sha512-AmmesI0QXFKtEGc/YvOpmeOpa32GMczRlxQWMqfixkskgddG0LJzF+0VLM3UMpBxpsOYMTPSBPe6DDXRCQbUMQ==
+"@nger/ast.tsc@^1.0.7":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@nger/ast.tsc/-/ast.tsc-1.0.7.tgz#45719afb62882c39e8b45b28344551859e3a9d15"
+  integrity sha512-Z8ypy/eW/RroBwG542lpvCqG3wgxbywmR82GVxrIwoJl1L4hfUDX00N7okGkniivd8bgZ7qdQTShceAkOLSqJg==
   dependencies:
     "@nger/plain" "^1.0.27"
     ts-morph "^5.0.0"
