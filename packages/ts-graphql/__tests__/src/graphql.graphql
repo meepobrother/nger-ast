@@ -4,7 +4,9 @@ scalar Json
 
 type Department {
   """部门id"""
-  id: String!
+  id: Float!
+  int32: Int!
+  isAdmin: Boolean!
   """部门名称"""
   title: String!
 }

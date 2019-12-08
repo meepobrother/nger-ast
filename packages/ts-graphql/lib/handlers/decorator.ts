@@ -47,9 +47,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             })
         }
     }
-    Injectable(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
-        throw new Error("Method not implemented.");
-    }
+    Injectable(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void { }
     Scalar(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         const scalar = new graphql.ScalarTypeDefinitionNode();
         if (decorator.arguments) {
@@ -76,25 +74,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         }
     }
     Entity(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): any {
-        const ast = new graphql.ObjectTypeDefinitionNode();
-        if (node.name) {
-            ast.name = node.name.visit(visitor, context);
-        }
-        if (node.members) {
-            ast.fields = node.members.map(it => {
-                return it.visit(visitor, context)
-            });
-        }
-        if (node.heritageClauses) {
-            const heritageClauses = node.heritageClauses.map(it => it.visit(visitor, context))
-            ast.interfaces = [];
-            heritageClauses.map((it: any) => {
-                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
-                    debugger;
-                }
-            })
-        }
-        return ast;
+        return this.Class(node,visitor,context)
     }
     Class(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext) {
         const ast = new graphql.ObjectTypeDefinitionNode();
@@ -111,10 +91,14 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             ast.interfaces = [];
             heritageClauses.map((it: any) => {
                 if (it.token === ts.SyntaxKind.ExtendsKeyword) {
-                    debugger;
+                    // debugger;
                 }
             })
         }
-        return ast;
+        if (ast.fields) {
+            if (ast.fields.filter(it => !!it).length > 0) {
+                return ast;
+            }
+        }
     }
 }

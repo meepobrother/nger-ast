@@ -4,11 +4,43 @@ import * as graphql from '@nger/ast.graphql';
 import { createNamedTypeNode, createTypeNode, createNameNode } from './handlers/util';
 import { TsGraphqlVisitor } from './ts-graphql';
 import { CompilerContext } from './compiler';
-function getTypeName(node: graphql.NamedTypeNode | graphql.ListTypeNode | graphql.NonNullTypeNode): string {
+function handlerName(val: string) {
+    switch (val) {
+        case 'Int':
+        case 'Int32':
+        case 'Int64':
+        case 'Uint32':
+        case 'Sint32':
+        case 'Uint64':
+        case 'Int64':
+        case 'Sint64':
+            return 'Int';
+        case 'String':
+            return 'String';
+        case 'Double':
+        case 'Float':
+        case 'Fixed32':
+        case 'Sfixed32':
+        case 'Fixed64':
+        case 'Sfixed64':
+            return 'Float';
+        case 'Bool':
+        case 'Boolean':
+        case 'boolean':
+            return 'Boolean';
+        case 'Id':
+            return 'Id';
+        default:
+            return val;
+    }
+}
+function getTypeName(node: graphql.NamedTypeNode | graphql.ListTypeNode | graphql.NonNullTypeNode | graphql.NameNode): string {
     if (node instanceof graphql.NamedTypeNode) {
-        return node.name.value;
+        return handlerName(node.name.value);
     } else if (node instanceof graphql.ListTypeNode) {
         return getTypeName(node.type)
+    } else if (node instanceof graphql.NameNode) {
+        return handlerName(node.value);
     } else {
         return getTypeName(node.type)
     }
@@ -80,6 +112,7 @@ export abstract class TypeNode {
                         if (type) it.type = new graphql.NonNullTypeNode(type)
                     }
                 }
+                it.type = createTypeNode(getTypeName(it.type), it.type)
                 return it;
             });
         }
@@ -216,7 +249,7 @@ export class ConstructorTypeNode extends TypeNode {
 export class TypeReferenceNode extends TypeNode {
     getName(): string {
         const { typeName } = this.node.toJson(this.visitor, this.context);
-        return typeName.value;
+        return handlerName(typeName.value);
     }
     getTscType() {
         const { typeName } = this.node.toJson(this.visitor, this.context);
