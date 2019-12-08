@@ -141,32 +141,36 @@ export abstract class TypeNode {
             if (ast && typeof ast.visit !== 'function') {
                 return;
             }
-            if (ast) {
-                const node = ast.visit(this.visitor, this.context);
-                if (node instanceof graphql.TypeParameter) {
-                    return node.default;
-                }
-                if (node instanceof graphql.ObjectTypeDefinitionNode) {
-                    if (nodes && Array.isArray(nodes)) {
-                        const nodeName = nodes.reverse().map(node => {
-                            if (node instanceof TypeNode) {
-                                return node.getFullName()
-                            } else if (node instanceof graphql.TypeParameter) {
-                                return node.name.value;
-                            }
-                        }).join('');
-                        node.name = createNameNode(nodeName + node.name.value)
+            try {
+                if (ast) {
+                    const node = ast.visit(this.visitor, this.context);
+                    if (node instanceof graphql.TypeParameter) {
+                        return node.default;
                     }
-                    this.handleInterface(node, nodes)
-                    if (isInput) {
-                        return this.transformTypeToInput(node)
+                    if (node instanceof graphql.ObjectTypeDefinitionNode) {
+                        if (nodes && Array.isArray(nodes)) {
+                            const nodeName = nodes.reverse().map(node => {
+                                if (node instanceof TypeNode) {
+                                    return node.getFullName()
+                                } else if (node instanceof graphql.TypeParameter) {
+                                    return node.name.value;
+                                }
+                            }).join('');
+                            node.name = createNameNode(nodeName + node.name.value)
+                        }
+                        this.handleInterface(node, nodes)
+                        if (isInput) {
+                            return this.transformTypeToInput(node)
+                        }
+                        return node;
                     }
-                    return node;
+                    if (node instanceof TypeNode) {
+                        const type = node.getType(nodes as any, true);
+                        return type;
+                    }
                 }
-                if (node instanceof TypeNode) {
-                    const type = node.getType(nodes as any, true);
-                    return type;
-                }
+            } catch (e) {
+                return;
             }
             return;
         }
@@ -363,7 +367,9 @@ export class TupleTypeNode extends TypeNode {
         throw new Error("Method not implemented.");
     }
     getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+        const { } = this.node;
+        debugger;
+        throw new Error(`TupleTypeNode`)
     }
     constructor(public node: tsc.TupleTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();

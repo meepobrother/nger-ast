@@ -306,10 +306,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitPrototypeSymbol(node: ast.PrototypeSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
-    visitExportStarSymbol(node: ast.ExportStarSymbol, context?: any) {
-        const { } = node.toJson(this, context);
-        debugger;
-    }
     visitOptionalSymbol(node: ast.OptionalSymbol, context?: any) {
         throw new Error("Method not implemented.");
     }
@@ -528,9 +524,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
                             if (getResolvedSignature) {
                                 const type = getResolvedSignature.getDeclaration().type;
                                 if (type) {
-                                    const typeNode = context.moduleRef.create<astTs.Node>(type);
+                                    const typeNode = context.create(type);
                                     if (typeNode && typeNode.visit) {
                                         const returnType = typeNode.visit(this, context);
+                                        debugger;
                                         if (returnType instanceof tsGraphqlAst.TypeNode) {
                                             const typeNode = returnType.getType();
                                             if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);

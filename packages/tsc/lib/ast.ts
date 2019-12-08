@@ -3426,16 +3426,6 @@ export class PrototypeSymbol extends Node {
     }
 }
 @Plain({
-    desc: { flags: ts.SymbolFlags.ExportStar, kind: undefined }
-})
-export class ExportStarSymbol extends Node {
-    @PlainPro()
-    flags: ts.SymbolFlags.ExportStar;
-    visit(visitor: Visitor, context?: any) {
-        return visitor.visitExportStarSymbol(this, context)
-    }
-}
-@Plain({
     desc: { flags: ts.SymbolFlags.Optional }
 })
 export class OptionalSymbol extends Node {
@@ -3807,7 +3797,6 @@ export interface Visitor {
     visitExportValueSymbol(node: ExportValueSymbol, context?: any): any;
     visitAliasSymbol(node: AliasSymbol, context?: any): any;
     visitPrototypeSymbol(node: PrototypeSymbol, context?: any): any;
-    visitExportStarSymbol(node: ExportStarSymbol, context?: any): any;
     visitOptionalSymbol(node: OptionalSymbol, context?: any): any;
     visitTransientSymbol(node: TransientSymbol, context?: any): any;
     visitAssignmentSymbol(node: AssignmentSymbol, context?: any): any;
