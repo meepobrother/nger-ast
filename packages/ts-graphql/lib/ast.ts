@@ -79,21 +79,16 @@ export abstract class TypeNode {
                                 return getName === parameter.name.value;
                             }
                             if (type instanceof graphql.NamedTypeNode) {
-                                return getTypeName(it.type) === parameter.name.value;
+                                return getTypeName(type) === parameter.name.value;
                             }
-                        } else {
-                            return getTypeName(it.type) === parameter.name.value;
                         }
-                        return false;
+                        return getTypeName(it.type) === parameter.name.value;
                     });
                     if (_nodes) {
                         const node = Reflect.get(_nodes, index)
                         if (node instanceof TypeNode) {
                             const type = node.type;
                             if (type) {
-                                if (it.type instanceof graphql.NonNullTypeNode) {
-                                    it.type = new graphql.NonNullTypeNode(type)
-                                }
                                 it.type = createTypeNode(getTypeName(type), it.type)
                             }
                         }
@@ -170,6 +165,7 @@ export abstract class TypeNode {
                     }
                 }
             } catch (e) {
+                debugger;
                 return;
             }
             return;

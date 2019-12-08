@@ -505,38 +505,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
                         if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
                     }
                 } else {
-                    if (node.body) {
-                        const { statements } = node.body;
-                        const res = statements.find(it => it instanceof astTs.ReturnStatement) as astTs.ReturnStatement
-                        if (res && res.expression) {
-                            let getContextualType = context.typeChecker.getContextualType(res.expression.__node as any);
-                            if (getContextualType) {
-                                const typeNode = this.handlerType(getContextualType, this, context)
-                                if (typeNode && typeNode.visit) {
-                                    const returnType = typeNode.visit(this, context);
-                                    if (returnType instanceof tsGraphqlAst.TypeNode) {
-                                        const typeNode = returnType.getType();
-                                        if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
-                                    }
-                                }
-                            }
-                            const getResolvedSignature = context.typeChecker.getResolvedSignature(res.expression.__node as any);
-                            if (getResolvedSignature) {
-                                const type = getResolvedSignature.getDeclaration().type;
-                                if (type) {
-                                    const typeNode = context.create(type);
-                                    if (typeNode && typeNode.visit) {
-                                        const returnType = typeNode.visit(this, context);
-                                        debugger;
-                                        if (returnType instanceof tsGraphqlAst.TypeNode) {
-                                            const typeNode = returnType.getType();
-                                            if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
                     if (!ast.type) {
                         const sourceFile = node.__node.getSourceFile();
                         const filename = sourceFile.fileName;

@@ -1,24 +1,26 @@
-type Cat {
-  id: Int!
-  name: String!
-  age: Int!
+type User {
+  username: String!
 }
 
-input CatInput {
-  id: Int!
-  name: String!
-  age: Int!
+type UserList {
+  data: [User]!
+  currentPage: Int!
+  pageSize: Int!
+  total: Int!
+}
+
+type Article {
+  title: String!
+}
+
+type ArticleList {
+  data: [Article]!
+  currentPage: Int!
+  pageSize: Int!
+  total: Int!
 }
 
 type Query {
-  getCats: [Cat]!
-  cat(id: Int!): Cat!
-}
-
-type Mutation {
-  createCat(args: CatInput!): Cat!
-}
-
-type Subscription {
-  catCreated: T!
+  getUser: UserList!
+  getArticles: ArticleList!
 }
