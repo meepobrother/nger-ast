@@ -9,6 +9,7 @@
         "@nestjs/platform-express": "^6.10.7",
         "@nger/ast.core": "^1.0.2",
         "apollo-server-core": "^2.9.13",
-        "apollo-server-express": "^2.9.13"
+        "apollo-server-express": "^2.9.13",
+        "typeorm": "^0.2.21"
     }
 }

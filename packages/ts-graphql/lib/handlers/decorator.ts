@@ -26,6 +26,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             });
         }
     }
+    Resolver(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode) { }
     Controller(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         const ast = new graphql.ObjectTypeDefinitionNode();
         if (node.name) {
@@ -62,7 +63,6 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
     }
     Magnus(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         const { name, members, heritageClauses } = node.toJson(visitor, context)
-        debugger;
         const ast = new graphql.ObjectTypeDefinitionNode();
         ast.name = name;
         ast.fields = members;
@@ -75,7 +75,46 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             })
         }
     }
-    Entity(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
-        throw new Error("Method not implemented.");
+    Entity(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): any {
+        const ast = new graphql.ObjectTypeDefinitionNode();
+        if (node.name) {
+            ast.name = node.name.visit(visitor, context);
+        }
+        if (node.members) {
+            ast.fields = node.members.map(it => {
+                return it.visit(visitor, context)
+            });
+        }
+        if (node.heritageClauses) {
+            const heritageClauses = node.heritageClauses.map(it => it.visit(visitor, context))
+            ast.interfaces = [];
+            heritageClauses.map((it: any) => {
+                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
+                    debugger;
+                }
+            })
+        }
+        return ast;
+    }
+    Class(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext) {
+        const ast = new graphql.ObjectTypeDefinitionNode();
+        if (node.name) {
+            ast.name = node.name.visit(visitor, context);
+        }
+        if (node.members) {
+            ast.fields = node.members.map(it => {
+                return it.visit(visitor, context)
+            });
+        }
+        if (node.heritageClauses) {
+            const heritageClauses = node.heritageClauses.map(it => it.visit(visitor, context))
+            ast.interfaces = [];
+            heritageClauses.map((it: any) => {
+                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
+                    debugger;
+                }
+            })
+        }
+        return ast;
     }
 }

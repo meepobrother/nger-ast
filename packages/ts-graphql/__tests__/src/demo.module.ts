@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { DemoGraphql, DateScalar, JsonScalar } from './graphql';
+import { DemoGraphql, DateScalar, JsonScalar, DemoUnion } from './graphql';
 import { GraphQLModule } from '@nestjs/graphql';
 import { join } from 'path';
 @Module({
@@ -7,14 +7,16 @@ import { join } from 'path';
         GraphQLModule.forRoot({
             typePaths: [join(__dirname, 'graphql.graphql')],
             resolverValidationOptions: {
-                requireResolversForResolveType: false
+                requireResolversForResolveType: false,
+                allowResolversNotInSchema: true
             }
         })
     ],
     providers: [
         DateScalar,
         JsonScalar,
-        DemoGraphql
+        DemoGraphql,
+        DemoUnion
     ]
 })
 export class DemoModule { }

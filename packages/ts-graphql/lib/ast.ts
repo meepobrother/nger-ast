@@ -22,10 +22,10 @@ export abstract class TypeNode {
     isInput: boolean;
     get type() {
         if (this._type) return this._type;
-        this._type = this.getType();
+        this._type = this.getType(undefined, true);
         return this._type;
     }
-    abstract getType(nodes?: (TypeNode | graphql.TypeParameter)[]): GraphqlType;
+    abstract getType(nodes?: (TypeNode | graphql.TypeParameter)[], isStatement?: boolean): GraphqlType;
     abstract getName(): string;
     getTscType(): ts.Type {
         throw new Error(`getTscType Error`)
@@ -46,6 +46,9 @@ export abstract class TypeNode {
                                 const getName = type.getName();
                                 return getName === parameter.name.value;
                             }
+                            if (type instanceof graphql.NamedTypeNode) {
+                                return getTypeName(it.type) === parameter.name.value;
+                            }
                         } else {
                             return getTypeName(it.type) === parameter.name.value;
                         }
@@ -54,7 +57,7 @@ export abstract class TypeNode {
                     if (_nodes) {
                         const node = Reflect.get(_nodes, index)
                         if (node instanceof TypeNode) {
-                            const type = node.getType(nodes as any);
+                            const type = node.type;
                             if (type) {
                                 if (it.type instanceof graphql.NonNullTypeNode) {
                                     it.type = new graphql.NonNullTypeNode(type)
@@ -70,8 +73,11 @@ export abstract class TypeNode {
                 if (it.type instanceof graphql.NonNullTypeNode) {
                     const type = it.type.type;
                     if (type instanceof TypeNode) {
-                        const typeNode = type.getType();
+                        const typeNode = type.type;
                         if (typeNode) it.type = new graphql.NonNullTypeNode(typeNode)
+                    }
+                    if (type instanceof graphql.NamedTypeNode) {
+                        if (type) it.type = new graphql.NonNullTypeNode(type)
                     }
                 }
                 return it;
@@ -97,7 +103,7 @@ export abstract class TypeNode {
     }
     createTsType(type: ts.Type, isInput: boolean, nodes?: (TypeNode | graphql.TypeParameter)[]): undefined | graphql.TypeNode | graphql.ObjectTypeDefinitionNode | graphql.InputObjectTypeDefinitionNode {
         const { symbol, aliasSymbol, aliasTypeArguments, pattern } = type;
-        if (symbol) {
+        if (symbol || aliasSymbol) {
             const ast = this.context.create(aliasSymbol || symbol);
             if (ast && typeof ast.visit !== 'function') {
                 return;
@@ -108,23 +114,25 @@ export abstract class TypeNode {
                     return node.default;
                 }
                 if (node instanceof graphql.ObjectTypeDefinitionNode) {
-                    this.handleInterface(node, nodes)
                     if (nodes && Array.isArray(nodes)) {
-                        node.name = createNameNode(nodes.reverse().map(node => {
+                        const nodeName = nodes.reverse().map(node => {
                             if (node instanceof TypeNode) {
                                 return node.getFullName()
                             } else if (node instanceof graphql.TypeParameter) {
                                 return node.name.value;
                             }
-                        }).join('') + node.name.value)
+                        }).join('');
+                        node.name = createNameNode(nodeName + node.name.value)
                     }
+                    this.handleInterface(node, nodes)
                     if (isInput) {
                         return this.transformTypeToInput(node)
                     }
                     return node;
                 }
                 if (node instanceof TypeNode) {
-                    return node.getType(nodes as any);
+                    const type = node.getType(nodes as any, true);
+                    return type;
                 }
             }
             return;
@@ -215,24 +223,26 @@ export class TypeReferenceNode extends TypeNode {
         const { __type } = typeName;
         return __type;
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
+    getType(nodes?: TypeNode[], isStatement: boolean = true): GraphqlType {
         const { typeArguments, typeName } = this.node.toJson(this.visitor, this.context);
         if (typeName) {
             const { __type } = typeName;
-            const tsType = this.createTsType(__type, this.isInput, typeArguments);
+            const tsType = this.createTsType(__type, this.isInput, nodes || typeArguments);
             if (!tsType) {
-                if (typeArguments && typeArguments.length > 0) return typeArguments[0].getType(nodes)
+                if (typeArguments && typeArguments.length > 0) return typeArguments[0].getType(nodes, isStatement)
             }
             if (tsType instanceof graphql.ObjectTypeDefinitionNode) {
-                this.context.setStatements([tsType])
+                if (isStatement)
+                    this.context.setStatements([tsType])
                 return createNamedTypeNode(tsType.name.value)
             }
             if (tsType instanceof graphql.InputObjectTypeDefinitionNode) {
-                this.context.setStatements([tsType])
+                if (isStatement)
+                    this.context.setStatements([tsType])
                 return createNamedTypeNode(tsType.name.value)
             }
             if (tsType instanceof TypeNode) {
-                return tsType.getType(typeArguments)
+                return tsType.getType(typeArguments, isStatement)
             }
             if (tsType instanceof graphql.NamedTypeNode) {
                 return createNamedTypeNode(tsType.name.value)
@@ -351,8 +361,20 @@ export class UnionTypeNode extends TypeNode {
     getName(): string {
         throw new Error("Method not implemented.");
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        return undefined;
+    getType(nodes?: TypeNode[], isStatement: boolean = true): any {
+        const { types } = this.node.toJson(this.visitor, this.context);
+        const ast = new graphql.UnionTypeDefinitionNode();
+        ast.types = types.map((it: any) => {
+            if (it instanceof TypeNode) {
+                const type = it.getType(nodes, isStatement);
+                if (type) {
+                    const typeName = getTypeName(type)
+                    return createNamedTypeNode(it.getFullName())
+                }
+                return it;
+            }
+        })
+        return ast;
     }
     constructor(public node: tsc.UnionTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -434,8 +456,17 @@ export class TypeAliasDeclaration extends TypeNode {
         this.visitor = visitor;
         this.context = context;
     }
-    getType(nodes?: TypeNode[]): graphql.NamedTypeNode {
+    getType(nodes?: TypeNode[], isStatement: boolean = true) {
         const { typeParameters, type, name } = this.node.toJson(this.visitor, this.context);
+        if (type instanceof TypeReferenceNode) {
+            return type.getType(nodes, isStatement)
+        }
+        if (type instanceof UnionTypeNode) {
+            const typeNode = type.getType(nodes, isStatement) as graphql.UnionTypeDefinitionNode;
+            typeNode.name = name;
+            if (isStatement) this.context.setStatements([typeNode]);
+            return createNamedTypeNode(name.value)
+        }
         let pre = ``
         if (nodes) {
             pre += nodes.reverse().map(it => it.getFullName()).join('')
@@ -447,15 +478,21 @@ export class TypeAliasDeclaration extends TypeNode {
             if (type instanceof TypeNode) {
                 type.handleInterface(graphqlType, nodes)
             }
-            this.context.setStatements([graphqlType]);
+            if (isStatement)
+                this.context.setStatements([graphqlType]);
         } else {
             const graphqlType = new graphql.ObjectTypeDefinitionNode();
             graphqlType.name = createNameNode(pre + name.value);
             graphqlType.typeParameters = typeParameters;
             if (type instanceof TypeNode) {
-                type.handleInterface(graphqlType, nodes)
+                if (type instanceof TypeReferenceNode) {
+                    type.handleInterface(graphqlType, nodes)
+                } else {
+                    type.handleInterface(graphqlType, nodes)
+                }
             }
-            this.context.setStatements([graphqlType]);
+            if (isStatement)
+                this.context.setStatements([graphqlType]);
         }
         return createNamedTypeNode(pre + name.value);
     }
@@ -466,6 +503,9 @@ export class MappedTypeNode extends TypeNode {
     }
     getType(nodes?: TypeNode[]): GraphqlType {
         throw new Error("Method not implemented.");
+    }
+    getTscType(): any {
+        throw new Error(`getTscType type`)
     }
     constructor(public node: tsc.MappedTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -488,8 +528,13 @@ export class MappedTypeNode extends TypeNode {
                 if (nodes) {
                     __node = Reflect.get(nodes, index);
                     if (__node) {
-                        const tscNode = __node.getTscType();
-                        const ast = __node.createTsType(tscNode, this.isInput, nodes)
+                        let ast = __node.type
+                        if (ast instanceof graphql.NameNode) {
+                            ast = this.context.statements.find(it => it.name.value === ast.value)
+                        }
+                        if (ast instanceof graphql.NamedTypeNode) {
+                            ast = this.context.statements.find(it => it.name.value === ast.name.value)
+                        }
                         Reflect.set(objs, type.name.value, ast)
                     }
                 }
@@ -524,20 +569,27 @@ export class IndexedAccessTypeNode extends TypeNode {
             if (ast && Array.isArray(ast.fields)) {
                 if (questionToken) {
                     node.fields = ast.fields.map((it: graphql.FieldDefinitionNode) => {
-                        const { name, type } = it;
-                        if (type instanceof graphql.NonNullTypeNode) {
-                            it.type = type.type;
+                        const item = new graphql.FieldDefinitionNode();
+                        item.name = it.name;
+                        item.description = it.description;
+                        item.directives = it.directives;
+                        if (it.type instanceof graphql.NonNullTypeNode) {
+                            item.type = it.type.type;
                         }
-                        return it;
+                        return item;
                     });
                 } else {
                     node.fields = ast.fields.map((it: graphql.FieldDefinitionNode) => {
-                        const { name, type } = it;
+                        const item = new graphql.FieldDefinitionNode();
+                        item.name = it.name;
+                        item.description = it.description;
+                        item.directives = it.directives;
+                        const { type } = it;
                         if (type instanceof graphql.NonNullTypeNode) {
                         } else {
-                            it.type = new graphql.NonNullTypeNode(type)
+                            item.type = new graphql.NonNullTypeNode(type)
                         }
-                        return it;
+                        return item;
                     });
                 }
             }
