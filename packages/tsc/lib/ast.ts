@@ -2,10 +2,10 @@ import * as ts from 'typescript';
 import { Plain, PlainPro, toPlain } from '@nger/plain';
 export function toJson(that: any, visitor: Visitor, context?: any, keys: string[] = []) {
     return toPlain(that, 'kind', (source, instance) => {
-        if (keys.includes(source.property as any)) {
+        if (keys && keys.includes(source.property as any)) {
             return;
         }
-        if (source.options.isClass) {
+        if (source && source.options && source.options.isClass) {
             if (Array.isArray(instance)) {
                 return visitor.visits(instance, context)
             }
