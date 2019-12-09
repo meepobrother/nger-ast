@@ -1,6 +1,6 @@
 {
     "name": "@nger/ast.graphql",
-    "version": "1.0.5",
+    "version": "1.1.1",
     "description": "> TODO: description",
     "author": "imeepos <1037483576@qq.com>",
     "homepage": "https://github.com/meepobrother/nger-ast#readme",
@@ -29,8 +29,8 @@
         "url": "https://github.com/meepobrother/nger-ast/issues"
     },
     "dependencies": {
-        "@nger/decorator": "^1.0.1",
-        "@nger/plain": "^1.0.27",
+        "@nger/decorator": "^1.1.1",
+        "@nger/plain": "^1.1.1",
         "typescript": "^3.7.3"
     }
 }

@@ -19,10 +19,10 @@
     "@nger/plain" "^1.0.27"
     typescript "^3.7.3"
 
-"@nger/ast.tsc@^1.0.8":
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/@nger/ast.tsc/-/ast.tsc-1.0.8.tgz#f0415333c5841ef859cfee41cfa9dd3d0da07e2b"
-  integrity sha512-HGHN5s9jlXXNE7Siotq72VgARWm+jaQ12AZlgObh8w0WFSBf/PPkkTa93rf+sq9vMVHaYm3h+bY1Pcx6iDKwRQ==
+"@nger/ast.tsc@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@nger/ast.tsc/-/ast.tsc-1.1.0.tgz#5de64034db1049ca4eeb84af53ebe3be2359b98e"
+  integrity sha512-VafOGiHWQgIFyxg0meiHpnD8+YPsYbS+21CK2FKvKSZzzZgUrey0uJiacaUnu4vCVEvg9Qm7W2tq3JAaQkWZcg==
   dependencies:
     "@nger/plain" "^1.0.27"
     ts-morph "^5.0.0"
@@ -34,12 +34,26 @@
   dependencies:
     reflect-metadata "^0.1.13"
 
+"@nger/decorator@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@nger/decorator/-/decorator-1.1.1.tgz#dd148ec7f452c9d342bfda058aaae83b5763dfe6"
+  integrity sha512-r75jHtunMyNeOaykCkqXfyAuGeBZCVojk72NPsRK+mfIg5wIra/cOcEqFy+KA/hzsoQtujwEjG8iuYgGGihX0Q==
+  dependencies:
+    reflect-metadata "^0.1.13"
+
 "@nger/plain@^1.0.27":
   version "1.0.27"
   resolved "https://registry.yarnpkg.com/@nger/plain/-/plain-1.0.27.tgz#76fc13066902fb4cab882efc9942333369fa2b36"
   integrity sha512-EctZ/aycizkgVdc5O9SqkCkhGPXpbUIsM/tcdLsep4pKBba9bgg15jTYDakEjnU3MLaN+ybi3Jd8Xa3oYiVueg==
   dependencies:
     "@nger/decorator" "^1.0.1"
+
+"@nger/plain@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@nger/plain/-/plain-1.1.1.tgz#3ce06d3e1faa39c070d90f9d8c57d233330083b8"
+  integrity sha512-ERK05lMBPDVVeqprtHjmgfRYID3paTXv5n5XsiU+Q0VHZluCatE8cpd9vGORHmnbKqpCLELhLruOsPRKOWHtdg==
+  dependencies:
+    "@nger/decorator" "^1.1.1"
 
 "@nodelib/fs.scandir@2.1.3":
   version "2.1.3"
