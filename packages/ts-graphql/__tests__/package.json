@@ -3,6 +3,7 @@
         "start": "ts-node -r tsconfig-paths/register src/main.ts"
     },
     "dependencies": {
+        "@ganker/utils": "^0.1.1",
         "@nestjs/common": "^6.10.7",
         "@nestjs/core": "^6.10.7",
         "@nestjs/graphql": "^6.5.3",

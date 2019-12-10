@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@ganker/utils@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@ganker/utils/-/utils-0.1.1.tgz#ca379de8914455c04662111baea8dfeaea1ab822"
+  integrity sha512-cQDwXCoZJCxAz1L4tV8H6kn2vS2nF7Uab7xYhRUjJJHo1ug/rV3RUal1wmaeOO44JZUxhawlvyhTT/Y3NL2q0Q==
+
 "@nger/decorator@^1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@nger/decorator/-/decorator-1.1.1.tgz#dd148ec7f452c9d342bfda058aaae83b5763dfe6"

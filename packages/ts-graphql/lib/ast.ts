@@ -129,7 +129,7 @@ export abstract class TypeNode {
         })
         return ast;
     }
-    createTsType(type: ts.Type, isInput: boolean, nodes?: (TypeNode | graphql.TypeParameter)[]): undefined | graphql.TypeNode | graphql.ObjectTypeDefinitionNode | graphql.InputObjectTypeDefinitionNode {
+    createTsType(type: ts.Type, isInput: boolean, nodes?: (TypeNode | graphql.TypeParameter)[], name?: string): undefined | graphql.TypeNode | graphql.ObjectTypeDefinitionNode | graphql.InputObjectTypeDefinitionNode {
         const { symbol, aliasSymbol, aliasTypeArguments, pattern } = type;
         if (symbol || aliasSymbol) {
             const ast = this.context.create(aliasSymbol || symbol);
@@ -143,6 +143,7 @@ export abstract class TypeNode {
                         return node.default;
                     }
                     if (node instanceof graphql.ObjectTypeDefinitionNode) {
+                        node.name = createNameNode(name || node.name.value)
                         if (nodes && Array.isArray(nodes)) {
                             const nodeName = nodes.reverse().map(node => {
                                 if (node instanceof TypeNode) {
@@ -151,7 +152,7 @@ export abstract class TypeNode {
                                     return node.name.value;
                                 }
                             }).join('');
-                            node.name = createNameNode(nodeName + node.name.value)
+                            node.name = createNameNode(nodeName + (name || node.name.value))
                         }
                         this.handleInterface(node, nodes)
                         if (isInput) {
@@ -261,7 +262,8 @@ export class TypeReferenceNode extends TypeNode {
         const { typeArguments, typeName } = this.node.toJson(this.visitor, this.context);
         if (typeName) {
             const { __type } = typeName;
-            const tsType = this.createTsType(__type, this.isInput, nodes || typeArguments);
+            const name = typeName.value;
+            const tsType = this.createTsType(__type, this.isInput, nodes || typeArguments, name);
             if (!tsType) {
                 if (typeArguments && typeArguments.length > 0) return typeArguments[0].getType(nodes, isStatement)
             }

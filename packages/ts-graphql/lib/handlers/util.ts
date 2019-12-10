@@ -1,9 +1,10 @@
 import * as graphql from '@nger/ast.graphql';
+import { TypeNode } from '../ast';
 export const hasModuleDecorator = hasDecorator(`Module`)
 export function hasDecorator(name: string) {
     return (decorators: graphql.DirectiveNode[]) => decorators.find(it => it.name.value === name)
 }
-export function createTypeNode(val: string, node: graphql.TypeNode): graphql.TypeNode {
+export function createTypeNode(val: string, node: graphql.TypeNode | TypeNode): graphql.TypeNode {
     if (node instanceof graphql.ListTypeNode) {
         return createListTypeNode(val)
     }
@@ -14,6 +15,9 @@ export function createTypeNode(val: string, node: graphql.TypeNode): graphql.Typ
         const { type } = node;
         const typeNode = createTypeNode(val, type)
         return createNonNullTypeNode(typeNode)
+    } else if (node instanceof TypeNode) {
+        const type = node.type;
+        return createTypeNode(val, type);
     } else {
         console.log(`createTypeNode error return createNamedTypeNode`)
         return createNamedTypeNode(val)

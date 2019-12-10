@@ -41,6 +41,11 @@
     is-absolute "^1.0.0"
     is-negated-glob "^1.0.0"
 
+"@ganker/utils@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@ganker/utils/-/utils-0.1.1.tgz#ca379de8914455c04662111baea8dfeaea1ab822"
+  integrity sha512-cQDwXCoZJCxAz1L4tV8H6kn2vS2nF7Uab7xYhRUjJJHo1ug/rV3RUal1wmaeOO44JZUxhawlvyhTT/Y3NL2q0Q==
+
 "@kamilkisiela/graphql-tools@4.0.6":
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/@kamilkisiela/graphql-tools/-/graphql-tools-4.0.6.tgz#6dcf4d18bedaf34f6ab1d5bad2414e530d0875d1"

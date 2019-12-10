@@ -1,23 +1,9 @@
-type User {
-  username: String!
-}
-
-type UserList {
-  data: [User]!
-  currentPage: Int!
-  pageSize: Int!
-  total: Int!
-}
-
-type Article {
-  title: String!
-}
-
-type ArticleRequired {
-  title: String!
+type UtilLoginUserResult {
+  code: Int!
+  message: String!
+  data: Json
 }
 
 type Query {
-  getUser: UserList!
-  getArticles: ArticleRequired!
+  getArticles: UtilLoginUserResult!
 }
