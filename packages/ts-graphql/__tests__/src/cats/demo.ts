@@ -8,6 +8,9 @@ export interface List<T> {
 export interface User {
     username: string;
 }
+export type Required<T> = {
+    [key in keyof T]: T[key]
+}
 export interface Article {
     title: string;
 }
@@ -18,7 +21,7 @@ export class DemoResolver {
         return {} as any;
     }
     @Query()
-    getArticles(): List<Article> {
+    getArticles(): Required<Article> {
         return {} as any;
     }
 }

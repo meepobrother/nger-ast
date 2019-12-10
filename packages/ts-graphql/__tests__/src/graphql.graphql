@@ -13,14 +13,11 @@ type Article {
   title: String!
 }
 
-type ArticleList {
-  data: [Article]!
-  currentPage: Int!
-  pageSize: Int!
-  total: Int!
+type ArticleRequired {
+  title: String!
 }
 
 type Query {
   getUser: UserList!
-  getArticles: ArticleList!
+  getArticles: ArticleRequired!
 }

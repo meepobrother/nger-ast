@@ -615,6 +615,7 @@ export class IndexedAccessTypeNode extends TypeNode {
                         item.name = it.name;
                         item.description = it.description;
                         item.directives = it.directives;
+                        item.type = it.type;
                         if (it.type instanceof graphql.NonNullTypeNode) {
                             item.type = it.type.type;
                         }
@@ -628,6 +629,7 @@ export class IndexedAccessTypeNode extends TypeNode {
                         item.directives = it.directives;
                         const { type } = it;
                         if (type instanceof graphql.NonNullTypeNode) {
+                            item.type = createTypeNode(getTypeName(type), type)
                         } else {
                             item.type = new graphql.NonNullTypeNode(type)
                         }
