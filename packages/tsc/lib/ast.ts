@@ -3000,7 +3000,7 @@ export class RegularExpressionLiteral extends Node {
     hasExtendedUnicodeEscape?: boolean;
 }
 @Plain({
-    desc: ts.SyntaxKind.IndexedAccessType
+    desc: ts.SyntaxKind.LiteralType
 })
 export class LiteralTypeNode extends Node {
     visit(visitor: Visitor, context?: any) {

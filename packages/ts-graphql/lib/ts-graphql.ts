@@ -887,10 +887,13 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitTypeParameterDeclaration(node: ast.TypeParameterDeclaration, context?: any) {
-        const { name, constraint, default: _def, expression } = node.toJson(this, context);
+        const { name, constraint, default: _def, expression, type } = node.toJson(this, context);
         const ast = new graphql.TypeParameter()
         ast.name = name;
         ast.default = _def;
+        ast.constraint = constraint;
+        ast.expression = expression;
+        ast.type = type;
         return ast;
     }
 

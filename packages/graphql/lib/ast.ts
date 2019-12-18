@@ -137,6 +137,7 @@ export interface ASTKindToNode {
 export abstract class Node {
     __node: any;
     __type: ts.Type;
+    __value: any;
     description?: StringValueNode;
     abstract visit(visitor: Visitor, context?: any): any;
     abstract toJson(visitor: Visitor, context?: any): any;
@@ -437,6 +438,7 @@ export class NamedTypeNode extends Node {
         isClass: true
     })
     name: NameNode;
+
     constructor(name?: NameNode) {
         super();
         if (name) this.name = name;
@@ -1073,6 +1075,12 @@ export class TypeParameter {
     default: TypeNode;
     @PlainPro({ isClass: true })
     name: NameNode;
+    @PlainPro({ isClass: true })
+    constraint: any;
+    @PlainPro({ isClass: true })
+    expression: any;
+    @PlainPro({ isClass: true })
+    type: any;
 }
 @Plain({
     desc: `InterfaceTypeDefinition`

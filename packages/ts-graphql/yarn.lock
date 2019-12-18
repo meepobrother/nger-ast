@@ -10,29 +10,22 @@
     is-absolute "^1.0.0"
     is-negated-glob "^1.0.0"
 
-"@nger/ast.graphql@^1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@nger/ast.graphql/-/ast.graphql-1.0.5.tgz#a3019545769fb8f1256c2a09956b78f028d12fc7"
-  integrity sha512-pw1RpJ6BAcrILac0ciCCbfpMo2llkX3wHR9AhE2cQzADSMDY3KbgQA+Do5Rvhwx5sqCuScw7T9Yos9qQOKeB3w==
+"@nger/ast.graphql@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@nger/ast.graphql/-/ast.graphql-1.1.1.tgz#3a3289b1aad100ad811a16f23d4b2bbba261fd46"
+  integrity sha512-Z80T1vLkXwqPvjGBbtcukR8yImN5prfvl35s8EBHOW5HJ7xXWmSHEo2syOYk2JCcxqQZZMP/eOGX87YbABkEvA==
   dependencies:
-    "@nger/decorator" "^1.0.1"
-    "@nger/plain" "^1.0.27"
+    "@nger/decorator" "^1.1.1"
+    "@nger/plain" "^1.1.1"
     typescript "^3.7.3"
 
-"@nger/ast.tsc@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@nger/ast.tsc/-/ast.tsc-1.1.0.tgz#5de64034db1049ca4eeb84af53ebe3be2359b98e"
-  integrity sha512-VafOGiHWQgIFyxg0meiHpnD8+YPsYbS+21CK2FKvKSZzzZgUrey0uJiacaUnu4vCVEvg9Qm7W2tq3JAaQkWZcg==
+"@nger/ast.tsc@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@nger/ast.tsc/-/ast.tsc-1.1.2.tgz#71ad4fed793fe5031b3b34ff1be2a80e776e3031"
+  integrity sha512-dU3dhjJ7JN3Tv+tA91muppVJFyO2aF7VYWxNaxWq6ratUaFvK/JdKDcG95ITRoji29Q4VfD0tNPG4ynBLP5Ojw==
   dependencies:
-    "@nger/plain" "^1.0.27"
+    "@nger/plain" "^1.1.1"
     ts-morph "^5.0.0"
-
-"@nger/decorator@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@nger/decorator/-/decorator-1.0.1.tgz#cf8a6de46c920106c908e1ac27d952f4d3105253"
-  integrity sha512-SUvkJZ7twApLjYGhmKSzw2RsJrHqe4FfBeSRnIjucV38lHwXlbkXIEFTDs9F8U6qtlBifU9KaMgX3UZ0ON6NiA==
-  dependencies:
-    reflect-metadata "^0.1.13"
 
 "@nger/decorator@^1.1.1":
   version "1.1.1"
@@ -41,12 +34,12 @@
   dependencies:
     reflect-metadata "^0.1.13"
 
-"@nger/plain@^1.0.27":
-  version "1.0.27"
-  resolved "https://registry.yarnpkg.com/@nger/plain/-/plain-1.0.27.tgz#76fc13066902fb4cab882efc9942333369fa2b36"
-  integrity sha512-EctZ/aycizkgVdc5O9SqkCkhGPXpbUIsM/tcdLsep4pKBba9bgg15jTYDakEjnU3MLaN+ybi3Jd8Xa3oYiVueg==
+"@nger/decorator@^1.1.12":
+  version "1.1.12"
+  resolved "https://registry.yarnpkg.com/@nger/decorator/-/decorator-1.1.12.tgz#8b921fbffda52338ecc304854c599f455bfc5343"
+  integrity sha512-0jOQBEZmG6S5zh1kiaiIIJ90FMKRDfxGyYvjgkn0RMT6SuccOYvkOZkQAaF15rbO1vA5HgMlSfJw6j3ZPrBvSg==
   dependencies:
-    "@nger/decorator" "^1.0.1"
+    reflect-metadata "^0.1.13"
 
 "@nger/plain@^1.1.1":
   version "1.1.1"
@@ -54,6 +47,13 @@
   integrity sha512-ERK05lMBPDVVeqprtHjmgfRYID3paTXv5n5XsiU+Q0VHZluCatE8cpd9vGORHmnbKqpCLELhLruOsPRKOWHtdg==
   dependencies:
     "@nger/decorator" "^1.1.1"
+
+"@nger/plain@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@nger/plain/-/plain-1.1.3.tgz#b08563a78c7d73f64fbd5b39344ff2e4772f0460"
+  integrity sha512-BrS9vTSi4sWh0FmlMvGx/9y9Y2SzI01xBNW/iBkADR7cJYaN3MFDk3/BqjnNUl+wNrE1ehToCCcxCnRScTq9VQ==
+  dependencies:
+    "@nger/decorator" "^1.1.12"
 
 "@nodelib/fs.scandir@2.1.3":
   version "2.1.3"

@@ -42,10 +42,12 @@ export function createNonNullTypeNode(val: graphql.TypeNode): graphql.NonNullTyp
     }
 }
 
-export function createNamedTypeNode(val: string): graphql.NamedTypeNode {
-    return new graphql.NamedTypeNode(
+export function createNamedTypeNode(val: string, __value?: any): graphql.NamedTypeNode {
+    const ast = new graphql.NamedTypeNode(
         createNameNode(val)
     )
+    ast.__value = __value;
+    return ast;
 }
 export function createNameNode(val: string): graphql.NameNode {
     return new graphql.NameNode(val);

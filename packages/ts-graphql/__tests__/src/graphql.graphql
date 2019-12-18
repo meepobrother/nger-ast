@@ -4,6 +4,8 @@ type UtilLoginUserResult {
   data: Json
 }
 
+type UtilLoginUserResultPick
+
 type Query {
-  getArticles: UtilLoginUserResult!
+  getArticles: UtilLoginUserResultPick!
 }

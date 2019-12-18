@@ -54,8 +54,14 @@ export abstract class TypeNode {
     isInput: boolean;
     get type() {
         if (this._type) return this._type;
-        this._type = this.getType(undefined, true);
-        return this._type;
+        try {
+            this._type = this.getType(undefined, true);
+            return this._type;
+        } catch (e) {
+            debugger;
+            console.log(e)
+
+        }
     }
     abstract getType(nodes?: (TypeNode | graphql.TypeParameter)[], isStatement?: boolean): GraphqlType;
     abstract getName(): string;
@@ -63,7 +69,10 @@ export abstract class TypeNode {
         throw new Error(`getTscType Error`)
     }
     getFullName(): string {
-        return getTypeName(this.type)
+        if (this.type) {
+            return getTypeName(this.type)
+        }
+        return ``;
     }
     handleInterface(node: graphql.ObjectTypeDefinitionNode | graphql.InputObjectTypeDefinitionNode, nodes?: (TypeNode | graphql.TypeParameter)[]) {
         if (node.fields) {
@@ -324,6 +333,7 @@ export class TypeLiteralNode extends TypeNode {
         throw new Error("Method not implemented.");
     }
     getType(nodes?: TypeNode[]): GraphqlType {
+        debugger;
         throw new Error("Method not implemented.");
     }
     constructor(public node: tsc.TypeLiteralNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
@@ -402,6 +412,9 @@ export class RestTypeNode extends TypeNode {
     }
 }
 export class UnionTypeNode extends TypeNode {
+    getFullName() {
+        return ``
+    }
     getName(): string {
         throw new Error("Method not implemented.");
     }
@@ -412,8 +425,7 @@ export class UnionTypeNode extends TypeNode {
             if (it instanceof TypeNode) {
                 const type = it.getType(nodes, isStatement);
                 if (type) {
-                    const typeName = getTypeName(type)
-                    return createNamedTypeNode(it.getFullName())
+                    return createNamedTypeNode(it.getFullName(), type.__value)
                 }
                 return it;
             }
@@ -482,7 +494,21 @@ export class TypeOperatorNode extends TypeNode {
     getName(): string {
         throw new Error("Method not implemented.");
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
+    getType(nodes?: TypeNode[]): any {
+        const { operator, type } = this.node.toJson(this.visitor, this.context);
+        let name: string = ``;
+        switch (operator) {
+            case ts.SyntaxKind.KeyOfKeyword:
+                name = `keyof`;
+                break;
+            case ts.SyntaxKind.UniqueKeyword:
+                name = 'unique';
+                break;
+            case ts.SyntaxKind.ReadonlyKeyword:
+                name = 'readonly'
+                break;
+        }
+        if (name.length > 0) return createNamedTypeNode(name, type)
         throw new Error("Method not implemented.");
     }
     constructor(public node: tsc.TypeOperatorNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
@@ -559,6 +585,7 @@ export class MappedTypeNode extends TypeNode {
     handleInterface(node: graphql.ObjectTypeDefinitionNode, nodes?: TypeNode[]) {
         const { readonlyToken, typeParameter, questionToken, type } = this.node.toJson(this.visitor, this.context);
         // 获取User所有属性
+        debugger;
         const objs = {
             readonlyToken,
             questionToken
@@ -573,13 +600,40 @@ export class MappedTypeNode extends TypeNode {
                     __node = Reflect.get(nodes, index);
                     if (__node) {
                         let ast = __node.type
-                        if (ast instanceof graphql.NameNode) {
-                            ast = this.context.statements.find(it => it.name.value === ast.value)
+                        const { constraint, default: _def, expression, name, type: _type } = type;
+                        if (constraint) {
+                            if (constraint instanceof TypeOperatorNode) {
+                                const operator = constraint.type;
+                                if (operator) {
+                                    if (getTypeName(operator) === 'keyof') {
+                                        const val = operator.__value;
+                                        if (val instanceof TypeReferenceNode) {
+                                            const type = val.type;
+                                            if (type) {
+                                                const typeName = getTypeName(type);
+                                                const val = Reflect.get(objs, typeName) || ast;
+                                                if (val instanceof graphql.UnionTypeDefinitionNode) {
+                                                    if (val.types) {
+                                                        const keys = val.types.map(t => t.__value)
+                                                        Reflect.set(objs, name.value, keys)
+                                                    }
+                                                } else {
+                                                    console.log(`handleInterface error`)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            if (ast instanceof graphql.NameNode) {
+                                ast = this.context.statements.find(it => it.name.value === ast.value)
+                            }
+                            if (ast instanceof graphql.NamedTypeNode) {
+                                ast = this.context.statements.find(it => it.name.value === ast.name.value)
+                            }
+                            Reflect.set(objs, type.name.value, ast)
                         }
-                        if (ast instanceof graphql.NamedTypeNode) {
-                            ast = this.context.statements.find(it => it.name.value === ast.name.value)
-                        }
-                        Reflect.set(objs, type.name.value, ast)
                     }
                 }
             })
@@ -609,7 +663,16 @@ export class IndexedAccessTypeNode extends TypeNode {
         const objectName = objectType.getName();
         if (nodes) {
             const ast = Reflect.get(nodes, objectName)
-            const questionToken = Reflect.get(nodes, 'questionToken')
+            const input = Reflect.get(nodes, indexName)
+            const questionToken = Reflect.get(nodes, 'questionToken');
+            if (ast instanceof graphql.UnionTypeDefinitionNode) {
+                if (ast.types) ast.types.map(it => {
+                    if (it.__value) {
+                        debugger;
+                    }
+                })
+            }
+            debugger;
             if (ast && Array.isArray(ast.fields)) {
                 if (questionToken) {
                     node.fields = ast.fields.map((it: graphql.FieldDefinitionNode) => {
@@ -648,7 +711,20 @@ export class LiteralTypeNode extends TypeNode {
         throw new Error("Method not implemented.");
     }
     getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+        const literal = this.node.literal.visit(this.visitor, this.context);
+        if (literal instanceof graphql.StringValueNode) {
+            return createNamedTypeNode('String', literal.value)
+        }
+        if (literal instanceof graphql.BooleanValueNode) {
+            return createNamedTypeNode('Boolean', literal.value)
+        }
+        if (literal instanceof graphql.FloatValueNode) {
+            return createNamedTypeNode('Float', literal.value)
+        }
+        if (literal instanceof graphql.IntValueNode) {
+            return createNamedTypeNode('Int', literal.value)
+        }
+        throw new Error(`LiteralTypeNode`);
     }
     constructor(public node: tsc.LiteralTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();

@@ -3,7 +3,7 @@ import { LoginUserResult as UtilLoginUserResult } from '@ganker/utils';
 @Resolver()
 export class DemoResolver {
     @Query()
-    getArticles(): UtilLoginUserResult {
+    getArticles(): Pick<UtilLoginUserResult, 'code' | 'message'> {
         return {} as any;
     }
 }
