@@ -949,7 +949,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const { } = node;
     }
     visitCallSignatureDeclaration(node: ast.CallSignatureDeclaration, context?: any) {
-        throw new Error("Method not implemented.");
     }
     visitArrowFunction(node: ast.ArrowFunction, context?: any) {
         return () => { };

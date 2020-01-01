@@ -1,8 +1,0 @@
-{
-    "inputs": [
-        "src/**/*.ts",
-        "src/*.ts"
-    ],
-    "name": "tests",
-    "assets": "src/assets"
-}

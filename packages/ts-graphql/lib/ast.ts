@@ -273,7 +273,7 @@ export class TypeReferenceNode extends TypeNode {
             const { __type } = typeName;
             const name = typeName.value;
             const tsType = this.createTsType(__type, this.isInput, nodes || typeArguments, name);
-            if (!tsType) {
+            if (!tsType || name === 'AsyncIterator' || name === 'Promise' || name === 'Observable' || name === 'Subject' || name === 'PromiseLike') {
                 if (typeArguments && typeArguments.length > 0) return typeArguments[0].getType(nodes, isStatement)
             }
             if (tsType instanceof graphql.ObjectTypeDefinitionNode) {
@@ -375,9 +375,7 @@ export class TupleTypeNode extends TypeNode {
         throw new Error("Method not implemented.");
     }
     getType(nodes?: TypeNode[]): GraphqlType {
-        const { } = this.node;
-        debugger;
-        throw new Error(`TupleTypeNode`)
+        return;
     }
     constructor(public node: tsc.TupleTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -482,7 +480,7 @@ export class ParenthesizedTypeNode extends TypeNode {
         throw new Error("Method not implemented.");
     }
     getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+        return;
     }
     constructor(public node: tsc.ParenthesizedTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();

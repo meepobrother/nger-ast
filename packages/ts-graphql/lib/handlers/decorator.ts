@@ -4,12 +4,15 @@ import * as ts from 'typescript';
 import { CompilerContext } from '../compiler';
 import * as graphql from '@nger/ast.graphql';
 export class NestDecoratorVisitor implements DecoratorVisitor {
+    NgModule(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
+        return this.Module(node, visitor, context, decorator)
+    }
     Module(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         if (decorator.arguments) {
             decorator.arguments.forEach(it => {
                 if (it instanceof graphql.ObjectValueNode) {
                     it.fields.forEach(field => {
-                        if (field.name.value === "providers") {
+                        if (field.name.value === "controllers" || field.name.value === "providers") {
                             const values = field.value;
                             if (Array.isArray(values)) {
                                 values.map(value => {
@@ -41,30 +44,6 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                 }
             });
         }
-        // if (node.members) {
-        //     node.members.map(member => {
-        //         if (member instanceof ast.MethodDeclaration) {
-        //             if (member.modifiers) {
-        //                 member.modifiers.map(modifier => {
-        //                     if (modifier.kind === ts.SyntaxKind.StaticKeyword) {
-        //                         const { body } = member;
-        //                         if (body) {
-        //                             const { statements } = body;
-        //                             if (statements) {
-        //                                 statements.map(statement => {
-        //                                     if (statement instanceof ast.ReturnStatement) {
-        //                                         const state = statement.visit(visitor, context)
-        //                                         debugger;
-        //                                     }
-        //                                 })
-        //                             }
-        //                         }
-        //                     }
-        //                 })
-        //             }
-        //         }
-        //     })
-        // }
     }
     Resolver(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode) { }
     Controller(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {

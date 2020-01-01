@@ -1,8 +1,19 @@
-import { NestFactory } from '@nestjs/core';
-import { ApplicationModule } from './app.module';
-
-async function bootstrap() {
-  const app = await NestFactory.create(ApplicationModule);
-  await app.listen(3000);
+import { corePlatform, Module, Controller } from '@nger/core'
+import { Query, Mutation, Subscription } from '@nger/graphql'
+@Controller()
+export class DemoController {
+    @Query()
+    getUser(): any {
+        return {} as any;
+    }
 }
-bootstrap();
+@Module({
+    controllers: [
+        DemoController
+    ]
+})
+export class AppModule { }
+
+corePlatform().bootstrapModule(AppModule).then(res => {
+    debugger;
+})
