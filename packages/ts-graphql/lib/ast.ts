@@ -60,10 +60,9 @@ export abstract class TypeNode {
         } catch (e) {
             debugger;
             console.log(e)
-
         }
     }
-    abstract getType(nodes?: (TypeNode | graphql.TypeParameter)[], isStatement?: boolean): GraphqlType;
+    abstract getType(nodes?: (TypeNode | graphql.TypeParameter)[], isStatement?: boolean): GraphqlType | undefined;
     abstract getName(): string;
     getTscType(): ts.Type {
         throw new Error(`getTscType Error`)
@@ -220,10 +219,10 @@ export class KeywordTypeNode extends TypeNode {
 }
 export class ThisTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType() {
+        return undefined;
     }
     constructor(public node: tsc.ThisTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -233,7 +232,7 @@ export class ThisTypeNode extends TypeNode {
 }
 export class FunctionTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
     getType(): GraphqlType {
         return undefined;
@@ -246,10 +245,10 @@ export class FunctionTypeNode extends TypeNode {
 }
 export class ConstructorTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
     getType(): GraphqlType {
-        throw new Error("Method not implemented.");
+        return undefined;
     }
     constructor(public node: tsc.ConstructorTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -294,7 +293,7 @@ export class TypeReferenceNode extends TypeNode {
             }
             return createNamedTypeNode(typeName.value)
         }
-        throw new Error("Method not implemented.");
+
     }
     constructor(public node: tsc.TypeReferenceNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -304,10 +303,10 @@ export class TypeReferenceNode extends TypeNode {
 }
 export class TypePredicateNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.TypePredicateNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -317,10 +316,10 @@ export class TypePredicateNode extends TypeNode {
 }
 export class TypeQueryNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.TypeQueryNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -330,11 +329,10 @@ export class TypeQueryNode extends TypeNode {
 }
 export class TypeLiteralNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        debugger;
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.TypeLiteralNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -348,7 +346,7 @@ export class ArrayTypeNode extends TypeNode {
         if (elementType) {
             return elementType.getName() + 's'
         }
-        throw new Error("Method not implemented.");
+        return ``
     }
     getType(nodes?: TypeNode[]): GraphqlType {
         let elementType: any;
@@ -372,10 +370,10 @@ export class ArrayTypeNode extends TypeNode {
 }
 export class TupleTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        return;
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.TupleTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -385,10 +383,10 @@ export class TupleTypeNode extends TypeNode {
 }
 export class OptionalTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.OptionalTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -398,10 +396,10 @@ export class OptionalTypeNode extends TypeNode {
 }
 export class RestTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.RestTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -410,11 +408,8 @@ export class RestTypeNode extends TypeNode {
     }
 }
 export class UnionTypeNode extends TypeNode {
-    getFullName() {
-        return ``
-    }
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
     getType(nodes?: TypeNode[], isStatement: boolean = true): any {
         const { types } = this.node.toJson(this.visitor, this.context);
@@ -438,10 +433,10 @@ export class UnionTypeNode extends TypeNode {
 }
 export class IntersectionTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.IntersectionTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -451,10 +446,10 @@ export class IntersectionTypeNode extends TypeNode {
 }
 export class ConditionalTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.ConditionalTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -464,10 +459,10 @@ export class ConditionalTypeNode extends TypeNode {
 }
 export class InferTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.InferTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -477,10 +472,10 @@ export class InferTypeNode extends TypeNode {
 }
 export class ParenthesizedTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        return;
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.ParenthesizedTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -490,7 +485,7 @@ export class ParenthesizedTypeNode extends TypeNode {
 }
 export class TypeOperatorNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
     getType(nodes?: TypeNode[]): any {
         const { operator, type } = this.node.toJson(this.visitor, this.context);
@@ -507,7 +502,7 @@ export class TypeOperatorNode extends TypeNode {
                 break;
         }
         if (name.length > 0) return createNamedTypeNode(name, type)
-        throw new Error("Method not implemented.");
+
     }
     constructor(public node: tsc.TypeOperatorNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -567,10 +562,10 @@ export class TypeAliasDeclaration extends TypeNode {
 }
 export class MappedTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
     getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+        return undefined
     }
     getTscType(): any {
         throw new Error(`getTscType type`)
@@ -644,10 +639,10 @@ export class MappedTypeNode extends TypeNode {
 }
 export class IndexedAccessTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.IndexedAccessTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -706,7 +701,7 @@ export class IndexedAccessTypeNode extends TypeNode {
 }
 export class LiteralTypeNode extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
     getType(nodes?: TypeNode[]): GraphqlType {
         const literal = this.node.literal.visit(this.visitor, this.context);
@@ -732,10 +727,10 @@ export class LiteralTypeNode extends TypeNode {
 }
 export class JSDocTypeExpression extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocTypeExpression, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -745,10 +740,10 @@ export class JSDocTypeExpression extends TypeNode {
 }
 export class JSDocNamepathType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocNamepathType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -758,10 +753,10 @@ export class JSDocNamepathType extends TypeNode {
 }
 export class JSDocVariadicType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocVariadicType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -771,10 +766,10 @@ export class JSDocVariadicType extends TypeNode {
 }
 export class JSDocFunctionType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocFunctionType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -784,10 +779,10 @@ export class JSDocFunctionType extends TypeNode {
 }
 export class JSDocOptionalType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocOptionalType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -797,10 +792,10 @@ export class JSDocOptionalType extends TypeNode {
 }
 export class JSDocNullableType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocNullableType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -810,10 +805,10 @@ export class JSDocNullableType extends TypeNode {
 }
 export class JSDocNonNullableType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocNonNullableType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -823,10 +818,10 @@ export class JSDocNonNullableType extends TypeNode {
 }
 export class JSDocUnknownType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocUnknownType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -836,10 +831,10 @@ export class JSDocUnknownType extends TypeNode {
 }
 export class JSDocAllType extends TypeNode {
     getName(): string {
-        throw new Error("Method not implemented.");
+        return ``
     }
-    getType(nodes?: TypeNode[]): GraphqlType {
-        throw new Error("Method not implemented.");
+    getType(): GraphqlType {
+        return undefined;
     }
     constructor(public node: tsc.JSDocAllType, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
