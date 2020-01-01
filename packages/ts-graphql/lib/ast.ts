@@ -58,7 +58,6 @@ export abstract class TypeNode {
             this._type = this.getType(undefined, true);
             return this._type;
         } catch (e) {
-            debugger;
             console.log(e)
         }
     }
@@ -75,7 +74,7 @@ export abstract class TypeNode {
     }
     handleInterface(node: graphql.ObjectTypeDefinitionNode | graphql.InputObjectTypeDefinitionNode, nodes?: (TypeNode | graphql.TypeParameter)[]) {
         if (node.fields) {
-            node.fields = (node.fields as any).map((it: any) => {
+            node.fields = (node.fields as any).filter((it: any) => !!it).map((it: any) => {
                 const _nodes = nodes;
                 const _typeParameters = node.typeParameters;
                 if (_typeParameters) {
@@ -174,7 +173,6 @@ export abstract class TypeNode {
                     }
                 }
             } catch (e) {
-                debugger;
                 return;
             }
             return;
@@ -578,7 +576,6 @@ export class MappedTypeNode extends TypeNode {
     handleInterface(node: graphql.ObjectTypeDefinitionNode, nodes?: TypeNode[]) {
         const { readonlyToken, typeParameter, questionToken, type } = this.node.toJson(this.visitor, this.context);
         // 获取User所有属性
-        debugger;
         const objs = {
             readonlyToken,
             questionToken
@@ -665,7 +662,6 @@ export class IndexedAccessTypeNode extends TypeNode {
                     }
                 })
             }
-            debugger;
             if (ast && Array.isArray(ast.fields)) {
                 if (questionToken) {
                     node.fields = ast.fields.map((it: graphql.FieldDefinitionNode) => {

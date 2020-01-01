@@ -15,7 +15,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                         if (field.name.value === "controllers" || field.name.value === "providers") {
                             const values = field.value;
                             if (Array.isArray(values)) {
-                                values.map(value => {
+                                values.filter(it => !!it).map(value => {
                                     const { __type: type } = value;
                                     if (type) {
                                         const ast = context.create(type.aliasSymbol || type.symbol || type)
@@ -70,7 +70,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
     Scalar(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         const scalar = new graphql.ScalarTypeDefinitionNode();
         if (decorator.arguments) {
-            decorator.arguments.forEach(it => {
+            decorator.arguments.filter(it => !!it).forEach(it => {
                 if (it instanceof graphql.StringValueNode) {
                     scalar.name = new graphql.NameNode(it.value);
                 }
