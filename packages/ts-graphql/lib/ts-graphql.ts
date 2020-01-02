@@ -8,7 +8,6 @@ import { existsSync } from 'fs';
 import { DecoratorVisitor } from './interfaces/decorator';
 import * as tsGraphqlAst from './ast';
 import { createNameNode } from './handlers/util';
-
 export class TsGraphqlContext {
     graphql: graphql.DocumentNode = new graphql.DocumentNode();
 }
@@ -482,10 +481,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitTaggedTemplateExpression(node: ast.TaggedTemplateExpression, context?: any) {
     }
     visitJsxText(node: ast.JsxText, context?: any) {
-        
+
     }
     visitSpreadAssignment(node: ast.SpreadAssignment, context?: any) {
-        
+
     }
     visitPropertyAssignment(node: ast.PropertyAssignment, context?: any) {
         const { name, questionToken, initializer } = node.toJson(this, context);
@@ -495,28 +494,28 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return file;
     }
     visitShorthandPropertyAssignment(node: ast.ShorthandPropertyAssignment, context?: any) {
-        
+
     }
     visitEmptyStatement(node: ast.EmptyStatement, context?: any) {
-        
+
     }
     visitJsxTagNamePropertyAccess(node: ast.JsxTagNamePropertyAccess, context?: any) {
-        
+
     }
     visitIfStatement(node: ast.IfStatement, context?: any) {
-        
+
     }
     visitDebuggerStatement(node: ast.DebuggerStatement, context?: any) {
-        
+
     }
     visitNotEmittedStatement(node: ast.NotEmittedStatement, context?: any) {
-        
+
     }
     visitDefaultClause(node: ast.DefaultClause, context?: any) {
-        
+
     }
     visitNamespaceDeclaration(node: ast.NamespaceDeclaration, context?: any) {
-        
+
     }
     visitNamedImports(node: ast.NamedImports, context?: any) {
         const { elements } = node.toJson(this, context);
@@ -527,19 +526,19 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return propertyName ? propertyName : name;
     }
     visitNamespaceImport(node: ast.NamespaceImport, context?: any) {
-        
+
     }
     visitCaseClause(node: ast.CaseClause, context?: any) {
-        
+
     }
     visitComputedPropertyName(node: ast.ComputedPropertyName, context?: any) {
         const { } = node;
     }
     visitObjectBindingPattern(node: ast.ObjectBindingPattern, context?: any) {
-        
+
     }
     visitArrayBindingPattern(node: ast.ArrayBindingPattern, context?: any) {
-        
+
     }
     visitParameterDeclaration(node: ast.ParameterDeclaration, context?: any) {
         let { dotDotDotToken, name, questionToken, type, initializer } = node.toJson(this, context);
@@ -555,7 +554,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return input;
     }
     visitBindingElement(node: ast.BindingElement, context?: any) {
-        
+
     }
     visitVariableDeclarationList(node: ast.VariableDeclarationList, context?: any) {
         const { declarations } = node.toJson(this, context);
@@ -566,53 +565,42 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return declarationList;
     }
     visitVariableDeclaration(node: ast.VariableDeclaration, context?: any) {
-        const { name, initializer } = node.toJson(this, context);
     }
-    visitDoStatement(node: ast.DoStatement, context?: any) {
-        
-    }
+    visitDoStatement(node: ast.DoStatement, context?: any) { }
     visitWhileStatement(node: ast.WhileStatement, context?: any) {
-        
     }
     visitForStatement(node: ast.ForStatement, context?: any) {
-        
     }
     visitForInStatement(node: ast.ForInStatement, context?: any) {
-        
     }
     visitForOfStatement(node: ast.ForOfStatement, context?: any) {
-        
     }
     visitBreakStatement(node: ast.BreakStatement, context?: any) {
-        
     }
     visitContinueStatement(node: ast.ContinueStatement, context?: any) {
-        
     }
     visitReturnStatement(node: ast.ReturnStatement, context?: any) {
         const { expression } = node.toJson(this, context);
         return expression;
     }
     visitWithStatement(node: ast.WithStatement, context?: any) {
-        
     }
     visitLabeledStatement(node: ast.LabeledStatement, context?: any) {
-        
     }
     visitCaseBlock(node: ast.CaseBlock, context?: any) {
-        
+
     }
     visitSwitchStatement(node: ast.SwitchStatement, context?: any) {
-        
+
     }
     visitThrowStatement(node: ast.ThrowStatement, context?: any) {
-        
+
     }
     visitCatchClause(node: ast.CatchClause, context?: any) {
-        
+
     }
     visitTryStatement(node: ast.TryStatement, context?: any) {
-        
+
     }
     visitImportClause(node: ast.ImportClause, context?: CompilerContext) {
         const { name, namedBindings } = node.toJson(this, context);
@@ -654,19 +642,19 @@ export class TsGraphqlVisitor implements ast.Visitor {
         // };
     }
     visitModuleBlock(node: ast.ModuleBlock, context?: any) {
-        
+
     }
     visitJSDocNamespaceDeclaration(node: ast.JSDocNamespaceDeclaration, context?: any) {
-        
+
     }
     visitJsxSpreadAttribute(node: ast.JsxSpreadAttribute, context?: any) {
-        
+
     }
     visitStringLiteral(node: ast.StringLiteral, context?: any) {
         return new graphql.StringValueNode(node.text)
     }
     visitJsxAttribute(node: ast.JsxAttribute, context?: any) {
-        
+
     }
     visitObjectLiteralExpression(node: ast.ObjectLiteralExpression, context?: any) {
         const { properties } = node.toJson(this, context);
@@ -675,65 +663,65 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return obj;
     }
     visitJsxAttributes(node: ast.JsxAttributes, context?: any) {
-        
+
     }
     visitJsxOpeningFragment(node: ast.JsxOpeningFragment, context?: any) {
-        
+
     }
     visitJsxClosingFragment(node: ast.JsxClosingFragment, context?: any) {
-        
+
     }
     visitJsxFragment(node: ast.JsxFragment, context?: any) {
-        
+
     }
     visitJsxSelfClosingElement(node: ast.JsxSelfClosingElement, context?: any) {
-        
+
     }
     visitJsxOpeningElement(node: ast.JsxOpeningElement, context?: any) {
-        
+
     }
     visitJsxClosingElement(node: ast.JsxClosingElement, context?: any) {
-        
+
     }
     visitJsxElement(node: ast.JsxElement, context?: any) {
-        
+
     }
     visitMetaProperty(node: ast.MetaProperty, context?: any) {
-        
+
     }
     visitArrayLiteralExpression(node: ast.ArrayLiteralExpression, context?: any) {
         const { elements } = node.toJson(this, context);
         return elements;
     }
     visitParenthesizedExpression(node: ast.ParenthesizedExpression, context?: any) {
-        
+
     }
     visitTemplateHead(node: ast.TemplateHead, context?: any) {
-        
+
     }
     visitTemplateExpression(node: ast.TemplateExpression, context?: any) {
-        
+
     }
     visitTemplateSpan(node: ast.TemplateSpan, context?: any) {
-        
+
     }
     visitTemplateMiddle(node: ast.TemplateMiddle, context?: any) {
-        
+
     }
     visitFunctionExpression(node: ast.FunctionExpression, context?: any) {
-        
+
     }
     visitTemplateTail(node: ast.TemplateTail, context?: any) {
-        
+
     }
     visitThisExpression(node: ast.ThisExpression, context?: any) {
-        
+
     }
     visitSuperExpression(node: ast.SuperExpression, context?: any) {
-        
+
     }
     visitImportExpression(node: ast.ImportExpression, context?: any) {
-        
+
     }
     visitNullLiteral(node: ast.NullLiteral, context?: any) {
         return new graphql.NullValueNode()
@@ -748,65 +736,65 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitPartiallyEmittedExpression(node: ast.PartiallyEmittedExpression, context?: any) {
-        
+
     }
     visitNonNullExpression(node: ast.NonNullExpression, context?: any) {
-        
+
     }
     visitPostfixUnaryExpression(node: ast.PostfixUnaryExpression, context?: any) {
-        
+
     }
     visitPrefixUnaryExpression(node: ast.PrefixUnaryExpression, context?: any) {
-        
+
     }
     visitDeleteExpression(node: ast.DeleteExpression, context?: any) {
-        
+
     }
     visitTypeOfExpression(node: ast.TypeOfExpression, context?: any) {
-        
+
     }
     visitVoidExpression(node: ast.VoidExpression, context?: any) {
-        
+
     }
     visitAwaitExpression(node: ast.AwaitExpression, context?: any) {
         const { expression } = node.toJson(this, context);
         return expression;
     }
     visitTypeAssertion(node: ast.TypeAssertion, context?: any) {
-        
+
     }
     visitCommaListExpression(node: ast.CommaListExpression, context?: any) {
-        
+
     }
     visitJsxExpression(node: ast.JsxExpression, context?: any) {
-        
+
     }
     visitAsExpression(node: ast.AsExpression, context?: any) {
-        
+
     }
     visitNewExpression(node: ast.NewExpression, context?: any) {
-        
+
     }
     visitSpreadElement(node: ast.SpreadElement, context?: any) {
-        
+
     }
     visitConditionalExpression(node: ast.ConditionalExpression, context?: any) {
-        
+
     }
     visitElementAccessExpression(node: ast.ElementAccessExpression, context?: any) {
-        
+
     }
     visitOmittedExpression(node: ast.OmittedExpression, context?: any) {
-        
+
     }
     visitYieldExpression(node: ast.YieldExpression, context?: any) {
-        
+
     }
     visitSyntheticExpression(node: ast.SyntheticExpression, context?: any) {
-        
+
     }
     visitPropertyAccessExpression(node: ast.PropertyAccessExpression, context?: any) {
-        
+
     }
     visitBigIntLiteral(node: ast.BigIntLiteral, context?: any) {
         const ast = new graphql.StringValueNode()
@@ -819,7 +807,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitSemicolonClassElement(node: ast.SemicolonClassElement, context?: any) {
-        
+
     }
     visitHeritageClause(node: ast.HeritageClause, context?: any) {
         const { token, types } = node.toJson(this, context);
@@ -842,7 +830,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitExternalModuleReference(node: ast.ExternalModuleReference, context?: any) {
-        
+
     }
     visitNamedExports(node: ast.NamedExports, context?: any) {
         const { elements } = node.toJson(this, context);
@@ -861,7 +849,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
     }
     visitEndOfFileToken(node: ast.EndOfFileToken, context?: any) {
-        
+
     }
     visitEnumMember(node: ast.EnumMember, context?: any) {
         const { name, initializer } = node.toJson(this, context);
@@ -870,10 +858,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitModuleDeclaration(node: ast.ModuleDeclaration, context?: any) {
-        
+
     }
     visitImportEqualsDeclaration(node: ast.ImportEqualsDeclaration, context?: any) {
-        
+
     }
     visitFunctionDeclaration(node: ast.FunctionDeclaration, context?: any) {
         if (node.body) {
@@ -911,14 +899,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return name ? name : expression;
     }
     visitJSDocSignature(node: ast.JSDocSignature, context: CompilerContext) {
-        
+
     }
     visitJSDocCallbackTag(node: ast.JSDocCallbackTag, context: CompilerContext) {
-        
+
     }
 
     visitJSDocTemplateTag(node: ast.JSDocTemplateTag, context: CompilerContext) {
-        
+
     }
     visitJSDocParameterTag(node: ast.JSDocParameterTag, context: CompilerContext) {
         const { name, typeExpression, comment, tagName, isBracketed, isNameFirst } = node.toJson(this, context);
@@ -935,7 +923,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitClassExpression(node: ast.ClassExpression, context?: any) {
-        
+
     }
     private serializeSymbol(symbol: ts.Symbol, context: CompilerContext): any {
         return {
@@ -966,13 +954,13 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return [...(tags || []), ast].flat();
     }
     visitJSDocTypeLiteral(node: ast.JSDocTypeLiteral, context?: any) {
-        
+
     }
     visitJSDocPropertyTag(node: ast.JSDocPropertyTag, context?: any) {
-        
+
     }
     visitJSDocTypedefTag(node: ast.JSDocTypedefTag, context?: any) {
-        
+
     }
 
     visitPropertySignature(node: ast.PropertySignature, context: CompilerContext) {
@@ -1032,7 +1020,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return new graphql.StringValueNode(rawText ? rawText : text);
     }
     visitGetAccessorDeclaration(node: ast.GetAccessorDeclaration, context?: any) {
-        
+
     }
 
     visitSourceFile(node: ast.SourceFile, context: CompilerContext) {
@@ -1075,7 +1063,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitQualifiedName(node: ast.QualifiedName, context?: any) {
-        
+
     }
     visitIdentifier(node: ast.Identifier, context: CompilerContext) {
         const ast = new graphql.NameNode();
@@ -1116,7 +1104,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitExportAssignment(node: ast.ExportAssignment, context?: any) {
-        
+
     }
     // type
     visitJSDocOptionalType(node: ast.JSDocOptionalType, context?: any) {
@@ -1170,8 +1158,13 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitKeywordTypeNode(node: ast.KeywordTypeNode, context: CompilerContext) {
         return new tsGraphqlAst.KeywordTypeNode(node, this, context, this.isInput)
     }
+    static typeReferenceNode: Map<any, any> = new Map();
     visitTypeReferenceNode(node: ast.TypeReferenceNode, context: CompilerContext) {
-        return new tsGraphqlAst.TypeReferenceNode(node, this, context, this.isInput);
+        if (TsGraphqlVisitor.typeReferenceNode.has(node.__node)) {
+            return TsGraphqlVisitor.typeReferenceNode.get(node.__node)
+        }
+        const ast = new tsGraphqlAst.TypeReferenceNode(node, this, context, this.isInput);
+        TsGraphqlVisitor.typeReferenceNode.set(node.__node, ast)
     }
     visitTypeLiteralNode(node: ast.TypeLiteralNode, context?: any) {
         return new tsGraphqlAst.TypeLiteralNode(node, this, context, this.isInput)

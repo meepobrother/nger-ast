@@ -271,7 +271,13 @@ export class TypeReferenceNode extends TypeNode {
             const name = typeName.value;
             const tsType = this.createTsType(__type, this.isInput, nodes || typeArguments, name);
             if (!tsType || name === 'AsyncIterator' || name === 'Promise' || name === 'Observable' || name === 'Subject' || name === 'PromiseLike') {
-                if (typeArguments && typeArguments.length > 0) return typeArguments[0].getType(nodes, isStatement)
+                if (typeArguments && typeArguments.length > 0) {
+                    try {
+                        return typeArguments[0].getType(nodes, isStatement)
+                    } finally {
+                        return this._type;
+                    }
+                }
             }
             if (tsType instanceof graphql.ObjectTypeDefinitionNode) {
                 if (isStatement)
@@ -356,9 +362,10 @@ export class ArrayTypeNode extends TypeNode {
         }
         if (elementType) {
             const type = elementType.getType(nodes)
-            return new graphql.ListTypeNode(type);
-        };
-        throw new Error(`ArrayTypeNode get type Error`)
+            if (type instanceof graphql.NamedTypeNode) {
+                return new graphql.ListTypeNode(type);
+            }
+        }
     }
     constructor(public node: tsc.ArrayTypeNode, visitor: TsGraphqlVisitor, context: CompilerContext, public isInput: boolean) {
         super();
@@ -664,7 +671,7 @@ export class IndexedAccessTypeNode extends TypeNode {
             }
             if (ast && Array.isArray(ast.fields)) {
                 if (questionToken) {
-                    node.fields = ast.fields.map((it: graphql.FieldDefinitionNode) => {
+                    node.fields = ast.fields.filter((it: any) => !!it).map((it: graphql.FieldDefinitionNode) => {
                         const item = new graphql.FieldDefinitionNode();
                         item.name = it.name;
                         item.description = it.description;
@@ -676,7 +683,7 @@ export class IndexedAccessTypeNode extends TypeNode {
                         return item;
                     });
                 } else {
-                    node.fields = ast.fields.map((it: graphql.FieldDefinitionNode) => {
+                    node.fields = ast.fields.filter((it: any) => !!it).map((it: graphql.FieldDefinitionNode) => {
                         const item = new graphql.FieldDefinitionNode();
                         item.name = it.name;
                         item.description = it.description;

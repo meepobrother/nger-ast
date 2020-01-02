@@ -9,9 +9,9 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
     }
     Module(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         if (decorator.arguments) {
-            decorator.arguments.forEach(it => {
+            decorator.arguments.filter(it => !!it).forEach(it => {
                 if (it instanceof graphql.ObjectValueNode) {
-                    it.fields.forEach(field => {
+                    it.fields.filter(it => !!it).forEach(field => {
                         if (field.name.value === "controllers" || field.name.value === "providers") {
                             const values = field.value;
                             if (Array.isArray(values)) {
