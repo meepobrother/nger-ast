@@ -20,8 +20,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                                     if (type) {
                                         const ast = context.create(type.aliasSymbol || type.symbol || type)
                                         if (ast) {
-                                            let res = ast.visit(visitor, context)
-                                            debugger;
+                                            ast.visit(visitor, context)
                                         }
                                     }
                                 })
