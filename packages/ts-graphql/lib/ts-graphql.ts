@@ -445,7 +445,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 if (node.type) {
                     const type = node.type.visit(this, context)
                     if (type instanceof tsGraphqlAst.TypeNode) {
-                        const typeNode = type.getType();
+                        const typeNode = type.getType(undefined, true);
                         if (typeNode) ast.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
                     }
                 } else {
@@ -871,21 +871,16 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitIndexSignatureDeclaration(node: ast.IndexSignatureDeclaration, context?: any) {
-        const { parameters, type, name, locals, questionToken, modifiers, typeParameters } = node.toJson(this, context);
-        debugger;
+
     }
     visitMethodSignature(node: ast.MethodSignature, context?: any) {
-        const { name, type, parameters, typeParameters, questionToken } = node.toJson(this, context);
     }
     visitConstructSignatureDeclaration(node: ast.ConstructSignatureDeclaration, context?: any) {
-        const { } = node;
     }
     visitCallSignatureDeclaration(node: ast.CallSignatureDeclaration, context?: any) {
     }
     visitArrowFunction(node: ast.ArrowFunction, context?: any) {
-        return () => { };
     }
-
     visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext): any {
         const { name, members } = node.toJson(this, context);
         const ast = new graphql.EnumTypeDefinitionNode();
@@ -1074,7 +1069,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitConstructorDeclaration(node: ast.ConstructorDeclaration, context?: any) {
-        const { } = node.toJson(this, context, 'body');
     }
     visitExpressionStatement(node: ast.ExpressionStatement, context?: any) {
         const { expression } = node.toJson(this, context);
@@ -1165,6 +1159,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
         const ast = new tsGraphqlAst.TypeReferenceNode(node, this, context, this.isInput);
         TsGraphqlVisitor.typeReferenceNode.set(node.__node, ast)
+        return ast;
     }
     visitTypeLiteralNode(node: ast.TypeLiteralNode, context?: any) {
         return new tsGraphqlAst.TypeLiteralNode(node, this, context, this.isInput)

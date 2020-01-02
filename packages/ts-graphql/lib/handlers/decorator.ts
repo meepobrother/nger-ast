@@ -12,7 +12,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             decorator.arguments.filter(it => !!it).forEach(it => {
                 if (it instanceof graphql.ObjectValueNode) {
                     it.fields.filter(it => !!it).forEach(field => {
-                        if (field.name.value === "controllers" || field.name.value === "providers") {
+                        if (field.name.value === "controllers") {
                             const values = field.value;
                             if (Array.isArray(values)) {
                                 values.filter(it => !!it).map(value => {
@@ -20,7 +20,8 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
                                     if (type) {
                                         const ast = context.create(type.aliasSymbol || type.symbol || type)
                                         if (ast) {
-                                            ast.visit(visitor, context)
+                                            let res = ast.visit(visitor, context)
+                                            debugger;
                                         }
                                     }
                                 })
@@ -95,7 +96,11 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
     Entity(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): any {
         return this.Class(node, visitor, context)
     }
+    static classes: Map<any, any> = new Map()
     Class(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext) {
+        if (NestDecoratorVisitor.classes.has(node.__node)) {
+            return NestDecoratorVisitor.classes.get(node.__node)
+        }
         const ast = new graphql.ObjectTypeDefinitionNode();
         if (node.name) {
             ast.name = node.name.visit(visitor, context);
@@ -116,6 +121,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         }
         if (ast.fields) {
             if (ast.fields.filter(it => !!it).length > 0) {
+                NestDecoratorVisitor.classes.set(node.__node, ast)
                 return ast;
             }
         }

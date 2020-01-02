@@ -16,7 +16,7 @@ export function createTypeNode(val: string, node: graphql.TypeNode | TypeNode): 
         const typeNode = createTypeNode(val, type)
         return createNonNullTypeNode(typeNode)
     } else if (node instanceof TypeNode) {
-        const type = node.type;
+        const type = node.createType();
         return createTypeNode(val, type);
     } else {
         console.log(`createTypeNode error return createNamedTypeNode`)
