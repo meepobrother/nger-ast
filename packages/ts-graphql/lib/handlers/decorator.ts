@@ -12,7 +12,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             decorator.arguments.filter(it => !!it).forEach(it => {
                 if (it instanceof graphql.ObjectValueNode) {
                     it.fields.filter(it => !!it).forEach(field => {
-                        if (field.name.value === "controllers") {
+                        if (field.name.value === "controllers" || field.name.value === "providers") {
                             const values = field.value;
                             if (Array.isArray(values)) {
                                 values.filter(it => !!it).map(value => {
