@@ -545,7 +545,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const input = new graphql.InputValueDefinitionNode();
         input.name = name;
         if (type instanceof tsGraphqlAst.TypeNode) {
-            const typeNode = type.getType();
+            const typeNode = type.getType(undefined, true);
             if (typeNode) input.type = questionToken ? typeNode : new graphql.NonNullTypeNode(typeNode);
         }
         if (dotDotDotToken) {
@@ -1080,7 +1080,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         if (typeNode) {
             typeNode.visit(this, context)
             if (Array.isArray(args)) {
-                args.map((arg: graphql.NameNode) => {
+                args.filter(it => !!it).map((arg: graphql.NameNode) => {
                     if (arg.__type) {
                         const ast = context.create(arg.__type.aliasSymbol || arg.__type.symbol || arg.__type)
                         if (ast) {

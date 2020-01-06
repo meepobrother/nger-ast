@@ -74,3 +74,7 @@ export function getType(type: graphql.TypeNode): graphql.ListTypeNode | graphql.
         return type;
     }
 }
+
+export function createStringValueNode(str: string){
+    return new graphql.StringValueNode(str)
+}

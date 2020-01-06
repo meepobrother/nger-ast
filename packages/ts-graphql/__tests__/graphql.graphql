@@ -1,3 +1,10 @@
+input UserOrder {
+  "排序:ASC升序 DESC降序"
+  username: String
+  "排序:ASC升序 DESC降序"
+  uid: String
+}
+
 type Query {
-  getUser: Json!
+  getUser(order: UserOrder): Object!
 }

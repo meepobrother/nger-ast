@@ -22,3 +22,20 @@ export class Fixed32 extends Number { }
 export class Sfixed32 extends Number { }
 export class Fixed64 extends Number { }
 export class Sfixed64 extends Number { }
+
+export interface Where<T> {
+    'AND': Where<T>;
+    'OR': Where<T>;
+    // key_Lt
+    [key: string]: any;
+}
+export type DeepPartial<T> = {
+    [P in keyof T]?: DeepPartial<T[P]>;
+}
+export type Simple<T> = {
+    [P in keyof T]?: T[P];
+}
+export type Order<T> = {
+    [P in keyof T]?: "ASC" | "DESC";
+}
+export type ID = string | number;
