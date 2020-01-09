@@ -1,6 +1,6 @@
 {
     "name": "@nger/ast.ts-graphql",
-    "version": "1.1.28",
+    "version": "1.1.29",
     "description": "> TODO: description",
     "author": "imeepos <1037483576@qq.com>",
     "homepage": "https://github.com/meepobrother/nger-ast#readme",
@@ -31,7 +31,7 @@
     "dependencies": {
         "@nger/ast.core": "^1.1.4",
         "@nger/ast.graphql": "^1.1.2",
-        "@nger/ast.tsc": "^1.1.3",
+        "@nger/ast.tsc": "^1.1.4",
         "@nger/plain": "^1.1.6"
     }
 }
