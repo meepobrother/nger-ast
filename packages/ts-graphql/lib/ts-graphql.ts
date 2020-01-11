@@ -6,8 +6,8 @@ import { join, dirname, extname } from 'path';
 import * as ts from 'typescript';
 import { existsSync } from 'fs';
 import { DecoratorVisitor } from './interfaces/decorator';
-import { createNameNode } from './handlers/util';
-import { TypeReferenceNode, Identifier, PropertySymbol } from '@nger/ast.tsc';
+import { createNameNode, getTypeName } from './handlers/util';
+import { TypeReferenceNode, Identifier, PropertySymbol, MethodSignature } from '@nger/ast.tsc';
 import { NamingStrage } from './naming-strage';
 export class TsGraphqlContext {
     graphql: graphql.DocumentNode = new graphql.DocumentNode();
@@ -1118,7 +1118,13 @@ export class TsGraphqlVisitor implements ast.Visitor {
         console.log(`visitJSDocNamepathType not implement`)
     }
     visitArrayTypeNode(node: ast.ArrayTypeNode, context: any) {
-        console.log(`visitArrayTypeNode not implement`)
+        const elementType = node.elementType;
+        const list = new graphql.ListTypeNode();
+        const type = elementType.visit(this, context)
+        if (type instanceof graphql.NamedTypeNode) {
+            list.type = type;
+        }
+        return list;
     }
     visitTupleTypeNode(node: ast.TupleTypeNode, context: any) {
         console.log(`visitTupleTypeNode not implement`)
@@ -1159,13 +1165,162 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     static typeReferenceNode: Map<any, any> = new Map();
     namingStrage: NamingStrage = new NamingStrage()
-    typeToGraphqlInput(node: ts.Type, context: CompilerContext) {
+    typeUnionToGraphqlInput(type: ts.UnionType, context: CompilerContext) {
+        let node = type.getNonNullableType();
+        if (node.flags === ts.TypeFlags.Union) {
+            const _node = node as ts.UnionType;
+            let types = _node.types;
+            if (types.length === 1) {
+                if (context.isInput) return this.typeToGraphqlInput(types[0], context)
+                return this.typeToGraphqlType(types[0], context)
+            } else {
+                const isString = types.every(it => it.flags === ts.TypeFlags.String || it.flags === ts.TypeFlags.StringLike || it.flags === ts.TypeFlags.StringLiteral || it.flags === ts.TypeFlags.StringOrNumberLiteral)
+                if (isString) {
+                    return new graphql.NameNode(`String`)
+                }
+                const isBoolean = types.every(it => it.flags === ts.TypeFlags.BooleanLiteral || it.flags === ts.TypeFlags.Boolean || it.flags === ts.TypeFlags.BooleanLike)
+                if (isBoolean) {
+                    return new graphql.NameNode('Boolean')
+                }
+                const isNumber = types.every(it => it.flags === ts.TypeFlags.Number || it.flags === ts.TypeFlags.NumberLike || it.flags === ts.TypeFlags.NumberLiteral)
+                if (isNumber) {
+                    return new graphql.NameNode('Int')
+                }
+                const unionTypeNode = new graphql.UnionTypeDefinitionNode();
+                unionTypeNode.types = types.map(it => {
+                    if (context.isInput) return this.typeToGraphqlInput(it, context)
+                    return this.typeToGraphqlType(it, context)
+                }).map(it => {
+                    if (it instanceof graphql.ListTypeNode) {
+                        return new graphql.NamedTypeNode(
+                            new graphql.NameNode(
+                                getTypeName(it)
+                            )
+                        )
+                    }
+                    else return new graphql.NamedTypeNode(it)
+                })
+                unionTypeNode.name = new graphql.NameNode(
+                    unionTypeNode.types.map(it => it.name.value).join('Or')
+                );
+                context.setStatements(unionTypeNode);
+                return unionTypeNode.name;
+            }
+        }
+        if (context.isInput) return this.typeToGraphqlInput(node, context)
+        return this.typeToGraphqlType(node, context)
+    }
+    typeToGraphqlInput(node: ts.Type, context: CompilerContext): graphql.NameNode | graphql.ListTypeNode {
+        switch (node.flags) {
+            case ts.TypeFlags.Any:
+                return new graphql.NameNode(`Any`)
+            case ts.TypeFlags.String:
+            case ts.TypeFlags.StringLike:
+            case ts.TypeFlags.StringLiteral:
+            case ts.TypeFlags.StringOrNumberLiteral:
+                return new graphql.NameNode(`String`)
+            case ts.TypeFlags.Number:
+            case ts.TypeFlags.NumberLike:
+            case ts.TypeFlags.NumberLiteral:
+                return new graphql.NameNode(`Int`)
+            case ts.TypeFlags.Boolean:
+            case ts.TypeFlags.BooleanLike:
+            case ts.TypeFlags.BooleanLiteral:
+                return new graphql.NameNode(`Boolean`)
+            case ts.TypeFlags.Unknown:
+                return new graphql.NameNode(`Unknown`)
+            case ts.TypeFlags.BigInt:
+            case ts.TypeFlags.BigIntLiteral:
+            case ts.TypeFlags.BigIntLike:
+                return new graphql.NameNode(`BigInt`)
+            case ts.TypeFlags.Enum:
+            case ts.TypeFlags.EnumLiteral:
+            case ts.TypeFlags.EnumLike:
+                return new graphql.NameNode(`Enum`)
+            case ts.TypeFlags.ESSymbol:
+            case ts.TypeFlags.ESSymbolLike:
+            case ts.TypeFlags.UniqueESSymbol:
+                return new graphql.NameNode(`ESSymbol`)
+            case ts.TypeFlags.Instantiable:
+            case ts.TypeFlags.InstantiablePrimitive:
+            case ts.TypeFlags.InstantiableNonPrimitive:
+            case ts.TypeFlags.StructuredOrInstantiable:
+                return new graphql.NameNode(`Instantiable`)
+            case ts.TypeFlags.Void:
+            case ts.TypeFlags.VoidLike:
+                return new graphql.NameNode(`Void`)
+            case ts.TypeFlags.Undefined:
+                return new graphql.NameNode(`Undefined`)
+            case ts.TypeFlags.Null:
+                return new graphql.NameNode(`Null`)
+            case ts.TypeFlags.Never:
+                return new graphql.NameNode(`Never`)
+            case ts.TypeFlags.TypeParameter:
+                return new graphql.NameNode(`TypeParameter`)
+            case ts.TypeFlags.Union:
+                return this.typeUnionToGraphqlInput(node as ts.UnionType, context)
+            case ts.TypeFlags.Intersection:
+                return new graphql.NameNode(`Intersection`)
+            case ts.TypeFlags.Index:
+                return new graphql.NameNode(`Index`)
+            case ts.TypeFlags.IndexedAccess:
+                return new graphql.NameNode(`IndexedAccess`)
+            case ts.TypeFlags.Conditional:
+                return new graphql.NameNode(`Conditional`)
+            case ts.TypeFlags.Substitution:
+                return new graphql.NameNode(`Substitution`)
+            case ts.TypeFlags.NonPrimitive:
+                return new graphql.NameNode(`NonPrimitive`)
+            case ts.TypeFlags.Literal:
+                return new graphql.NameNode(`Literal`)
+            case ts.TypeFlags.Unit:
+                return new graphql.NameNode(`Literal`)
+            case ts.TypeFlags.PossiblyFalsy:
+                return new graphql.NameNode(`PossiblyFalsy`)
+            case ts.TypeFlags.UnionOrIntersection:
+                return new graphql.NameNode(`UnionOrIntersection`)
+            case ts.TypeFlags.StructuredType:
+                return new graphql.NameNode(`StructuredType`)
+            case ts.TypeFlags.TypeVariable:
+                return new graphql.NameNode(`TypeVariable`)
+            case ts.TypeFlags.Narrowable:
+                return new graphql.NameNode(`Narrowable`)
+            case ts.TypeFlags.NotUnionOrUnit:
+                return new graphql.NameNode(`NotUnionOrUnit`)
+            case ts.TypeFlags.Object:
+            default:
+                break;
+        }
         const input = new graphql.InputObjectTypeDefinitionNode();
         const fields: graphql.InputValueDefinitionNode[] = [];
         const properties = node.getProperties();
-        const typeToString = this.namingStrage.create(context.typeChecker.typeToString(
+        const numberIndexType = node.getNumberIndexType();
+        if (numberIndexType) {
+            const indexType = this.typeToGraphqlInput(numberIndexType, context)
+            if (indexType instanceof graphql.InputObjectTypeDefinitionNode) {
+                return new graphql.ListTypeNode(
+                    new graphql.NamedTypeNode(
+                        indexType.name
+                    )
+                );
+            } else if (indexType instanceof graphql.ListTypeNode) {
+                return new graphql.ListTypeNode(indexType);
+            } else {
+                return new graphql.ListTypeNode(new graphql.NamedTypeNode(
+                    indexType
+                ));
+            }
+        }
+        let typeToString = this.namingStrage.create(context.typeChecker.typeToString(
             node
         ), context);
+        const statement = context.getStatement(typeToString)
+        if (statement) {
+            const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
+            if (!isInput) {
+                typeToString += 'Input'
+            }
+        }
         input.name = new graphql.NameNode(typeToString)
         if (context.hasStatement(typeToString)) {
             return input.name
@@ -1175,39 +1330,152 @@ export class TsGraphqlVisitor implements ast.Visitor {
         properties.map(it => {
             const field = new graphql.InputValueDefinitionNode();
             field.name = new graphql.NameNode(it.getName())
-            const type = Reflect.get(it, 'type')
+            let type = Reflect.get(it, 'type')
+            const valueDeclaration = Reflect.get(it, 'valueDeclaration')
+            let questionToken = valueDeclaration && valueDeclaration.questionToken;
             if (type) {
-                const gt = this.typeToGraphqlInput(type, context)
-                if (gt instanceof graphql.InputObjectTypeDefinitionNode) {
-                    context.setStatements(gt)
-                    field.type = new graphql.NamedTypeNode(gt.name)
-                } else {
-                    field.type = new graphql.NamedTypeNode(gt)
+                const graphqlType = this.typeToGraphqlInput(type, context);
+                if (graphqlType instanceof graphql.NameNode) {
+                    field.type = new graphql.NamedTypeNode(graphqlType)
+                    fields.push(field)
+                    return;
+                } else if (graphqlType instanceof graphql.ListTypeNode) {
+                    field.type = graphqlType;
+                    fields.push(field)
+                    return;
                 }
             } else {
-                const valueDeclaration = Reflect.get(it, 'valueDeclaration')
+                const val = context.create(valueDeclaration);
+                if (val instanceof MethodSignature) {
+                    return;
+                }
                 const ast = context.create(valueDeclaration.type);
                 if (ast) {
                     const type = ast.visit(this, context)
                     if (type instanceof graphql.NameNode) {
                         field.type = new graphql.NamedTypeNode(type)
-                    } else {
-                        debugger;
+                    } else if (type instanceof graphql.NamedTypeNode) {
+                        field.type = type;
+                    } else if (type instanceof graphql.ListTypeNode) {
+                        field.type = type;
                     }
                 }
+            }
+            if (!questionToken) {
+                field.type = new graphql.NonNullTypeNode(
+                    field.type as any
+                )
             }
             fields.push(field)
         });
         input.fields = fields;
-        return input;
+        return input.name;
     }
-    typeToGraphqlType(node: ts.Type, context: CompilerContext): graphql.NameNode | graphql.ObjectTypeDefinitionNode {
+    typeToGraphqlType(node: ts.Type, context: CompilerContext): graphql.NameNode | graphql.ListTypeNode {
+        switch (node.flags) {
+            case ts.TypeFlags.Any:
+                return new graphql.NameNode(`Any`)
+            case ts.TypeFlags.String:
+            case ts.TypeFlags.StringLike:
+            case ts.TypeFlags.StringLiteral:
+            case ts.TypeFlags.StringOrNumberLiteral:
+                return new graphql.NameNode(`String`)
+            case ts.TypeFlags.Number:
+            case ts.TypeFlags.NumberLike:
+            case ts.TypeFlags.NumberLiteral:
+                return new graphql.NameNode(`Int`)
+            case ts.TypeFlags.Boolean:
+            case ts.TypeFlags.BooleanLike:
+            case ts.TypeFlags.BooleanLiteral:
+                return new graphql.NameNode(`Boolean`)
+            case ts.TypeFlags.Unknown:
+                return new graphql.NameNode(`Unknown`)
+            case ts.TypeFlags.BigInt:
+            case ts.TypeFlags.BigIntLiteral:
+            case ts.TypeFlags.BigIntLike:
+                return new graphql.NameNode(`BigInt`)
+            case ts.TypeFlags.Enum:
+            case ts.TypeFlags.EnumLiteral:
+            case ts.TypeFlags.EnumLike:
+                return new graphql.NameNode(`Enum`)
+            case ts.TypeFlags.ESSymbol:
+            case ts.TypeFlags.ESSymbolLike:
+            case ts.TypeFlags.UniqueESSymbol:
+                return new graphql.NameNode(`ESSymbol`)
+            case ts.TypeFlags.Instantiable:
+            case ts.TypeFlags.InstantiablePrimitive:
+            case ts.TypeFlags.InstantiableNonPrimitive:
+            case ts.TypeFlags.StructuredOrInstantiable:
+                return new graphql.NameNode(`Instantiable`)
+            case ts.TypeFlags.Void:
+            case ts.TypeFlags.VoidLike:
+                return new graphql.NameNode(`Void`)
+            case ts.TypeFlags.Undefined:
+                return new graphql.NameNode(`Undefined`)
+            case ts.TypeFlags.Null:
+                return new graphql.NameNode(`Null`)
+            case ts.TypeFlags.Never:
+                return new graphql.NameNode(`Never`)
+            case ts.TypeFlags.TypeParameter:
+                return new graphql.NameNode(`TypeParameter`)
+            case ts.TypeFlags.Union:
+                return this.typeUnionToGraphqlInput(node as ts.UnionType, context)
+            case ts.TypeFlags.Intersection:
+                return new graphql.NameNode(`Intersection`)
+            case ts.TypeFlags.Index:
+                return new graphql.NameNode(`Index`)
+            case ts.TypeFlags.IndexedAccess:
+                return new graphql.NameNode(`IndexedAccess`)
+            case ts.TypeFlags.Conditional:
+                return new graphql.NameNode(`Conditional`)
+            case ts.TypeFlags.Substitution:
+                return new graphql.NameNode(`Substitution`)
+            case ts.TypeFlags.NonPrimitive:
+                return new graphql.NameNode(`NonPrimitive`)
+            case ts.TypeFlags.Literal:
+                return new graphql.NameNode(`Literal`)
+            case ts.TypeFlags.Unit:
+                return new graphql.NameNode(`Literal`)
+            case ts.TypeFlags.PossiblyFalsy:
+                return new graphql.NameNode(`PossiblyFalsy`)
+            case ts.TypeFlags.UnionOrIntersection:
+                return new graphql.NameNode(`UnionOrIntersection`)
+            case ts.TypeFlags.StructuredType:
+                return new graphql.NameNode(`StructuredType`)
+            case ts.TypeFlags.TypeVariable:
+                return new graphql.NameNode(`TypeVariable`)
+            case ts.TypeFlags.Narrowable:
+                return new graphql.NameNode(`Narrowable`)
+            case ts.TypeFlags.NotUnionOrUnit:
+                return new graphql.NameNode(`NotUnionOrUnit`)
+            case ts.TypeFlags.Object:
+            default:
+                break;
+        }
         const input = new graphql.ObjectTypeDefinitionNode();
         const fields: graphql.FieldDefinitionNode[] = [];
         const properties = node.getProperties();
-        const typeToString = this.namingStrage.create(context.typeChecker.typeToString(
+        const numberIndexType = node.getNumberIndexType();
+        if (numberIndexType) {
+            const indexType = this.typeToGraphqlType(numberIndexType, context)
+            if (indexType instanceof graphql.ListTypeNode) {
+                return new graphql.ListTypeNode(indexType);
+            } else {
+                return new graphql.ListTypeNode(new graphql.NamedTypeNode(
+                    indexType
+                ));
+            }
+        }
+        let typeToString = this.namingStrage.create(context.typeChecker.typeToString(
             node
         ), context);
+        const statement = context.getStatement(typeToString)
+        if (statement) {
+            const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
+            if (isInput) {
+                typeToString += 'Type'
+            }
+        }
         input.name = new graphql.NameNode(typeToString)
         if (context.hasStatement(typeToString)) {
             return input.name
@@ -1222,8 +1490,9 @@ export class TsGraphqlVisitor implements ast.Visitor {
             if (type) {
                 const gt = this.typeToGraphqlType(type, context)
                 if (gt instanceof graphql.ObjectTypeDefinitionNode) {
-                    context.setStatements(gt)
                     field.type = new graphql.NamedTypeNode(gt.name)
+                } else if (gt instanceof graphql.ListTypeNode) {
+                    field.type = gt;
                 } else {
                     field.type = new graphql.NamedTypeNode(gt)
                 }
@@ -1233,29 +1502,44 @@ export class TsGraphqlVisitor implements ast.Visitor {
                     )
                 }
             } else {
-                const ast = context.create(valueDeclaration.type);
-                if (ast) {
-                    const type = ast.visit(this, context)
-                    if (type instanceof graphql.NameNode) {
-                        field.type = new graphql.NamedTypeNode(type)
-                    } else if (type instanceof graphql.NamedTypeNode) {
-                        field.type = type;
+                const ast = context.create(valueDeclaration);
+                if (ast instanceof MethodSignature) {
+                    field.arguments = ast.parameters.map(it => it.visit(this, context))
+                    if (ast.type) {
+                        const type = ast.type.visit(this, context);
+                        if (type instanceof graphql.NameNode) {
+                            field.type = new graphql.NamedTypeNode(type)
+                        } else if (type instanceof graphql.NamedTypeNode) {
+                            field.type = type;
+                        } else if (type instanceof graphql.ListTypeNode) {
+                            field.type = type;
+                        }
                     }
-                    if (!questionToken) {
-                        field.type = new graphql.NonNullTypeNode(
-                            field.type as any
-                        )
+                } else {
+                    const ast = context.create(valueDeclaration.type);
+                    if (ast) {
+                        const type = ast.visit(this, context)
+                        if (type instanceof graphql.NameNode) {
+                            field.type = new graphql.NamedTypeNode(type)
+                        } else if (type instanceof graphql.NamedTypeNode) {
+                            field.type = type;
+                        } else if (type instanceof graphql.ListTypeNode) {
+                            field.type = type;
+                        }
+                        if (!questionToken) {
+                            field.type = new graphql.NonNullTypeNode(
+                                field.type as any
+                            )
+                        }
                     }
                 }
             }
-
             fields.push(field)
         });
         input.fields = fields;
-        return input;
+        return input.name;
     }
     visitTypeReferenceNode(node: ast.TypeReferenceNode, context: CompilerContext): any {
-        const type = context.typeChecker.getTypeFromTypeNode(node.__node)
         const typeName = node.typeName.visit(this, context)
         if (typeName.value && node.typeArguments) {
             switch (typeName.value) {
@@ -1269,11 +1553,12 @@ export class TsGraphqlVisitor implements ast.Visitor {
                     return node.typeArguments[0].visit(this, context)
             }
         }
+        const type = context.typeChecker.getTypeFromTypeNode(node.__node)
         if (context.isInput) {
             const input = this.typeToGraphqlInput(type, context)
             if (input) {
-                if (input instanceof graphql.InputObjectTypeDefinitionNode) {
-                    return new graphql.NamedTypeNode(input.name)
+                if (input instanceof graphql.ListTypeNode) {
+                    return input
                 } else {
                     return new graphql.NamedTypeNode(input)
                 }
@@ -1283,11 +1568,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
             if (input) {
                 if (input instanceof graphql.ObjectTypeDefinitionNode) {
                     return new graphql.NamedTypeNode(input.name)
+                } else if (input instanceof graphql.ListTypeNode) {
+                    return input;
                 } else {
                     return new graphql.NamedTypeNode(input)
                 }
             }
         }
+
     }
     visitTypeLiteralNode(node: ast.TypeLiteralNode, context?: any) {
         console.log(`visitTypeLiteralNode`)

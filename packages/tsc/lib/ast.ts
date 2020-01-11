@@ -3059,6 +3059,7 @@ export class JSDocNamepathType extends Node {
     desc: { kind: ts.SyntaxKind.ArrayType }
 })
 export class ArrayTypeNode extends Node {
+    __node: ts.ArrayTypeNode;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitArrayTypeNode(this, context)
     }

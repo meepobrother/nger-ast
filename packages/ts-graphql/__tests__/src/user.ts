@@ -1,5 +1,7 @@
 export interface User {
-    username: string;
-    uid: number;
-    child: User;
+    getName(name: string): string;
+}
+
+export interface User2 {
+    title: string;
 }

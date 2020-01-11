@@ -2,19 +2,19 @@ import { CompilerContext } from "./compiler";
 export class NamingStrage {
     createUnionName(name: string, context: CompilerContext) {
         name = name.trim();
-        const names = name.split('|')
+        const names = name.split('|').map(it => it.trim()).filter(it => it !== 'undefined')
         if (names.length === 1) {
-            return names[0]
+            return this.handlerName(names[0]);
         } else {
-            const isString = name.startsWith(`"`)
+            const isString = name.startsWith(`"`);
             if (isString) return this.handlerName('string');
-            return name.split(',')[0]
+            return name.split(',')[0];
         }
     }
     create(name: string | undefined, context: CompilerContext): string {
         let targetName: string = name || ``
         const reg = /(.*?)\<(.*)\>/;
-        const exec = reg.exec(targetName)
+        const exec = reg.exec(targetName);
         if (exec) {
             switch (exec.length) {
                 case 0:
@@ -36,6 +36,15 @@ export class NamingStrage {
             }
         }
         targetName = this.createUnionName(targetName, context)
+        if (targetName.includes('[')) {
+            return this.create(targetName.replace('[', ''), context);
+        }
+        if (targetName.includes(']')) {
+            return this.create(targetName.replace(']', ''), context);
+        }
+        if (targetName.includes('&')) {
+            return targetName.split('&').map(it => it.trim()).join('And')
+        }
         return targetName;
     }
     handlerName(val: string) {

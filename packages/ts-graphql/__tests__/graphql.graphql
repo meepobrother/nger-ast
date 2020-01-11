@@ -1,14 +1,19 @@
-input UserPickOrder {
+input UserAndUser2PickOrder {
   username: String
   uid: String
+  title: String
 }
 
 type User {
-  username: String!
-  uid: Int!
-  child: User!
+  getName(name: String!): String
 }
 
+type User2 {
+  title: String!
+}
+
+union UserOrUser2 = User | User2
+
 type Query {
-  getUser(order: UserPickOrder): User!
+  getUser(order: UserAndUser2PickOrder): [UserOrUser2]!
 }
