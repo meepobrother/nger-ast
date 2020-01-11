@@ -1,10 +1,14 @@
-input UserOrder {
-  "排序:ASC升序 DESC降序"
+input UserPickOrder {
   username: String
-  "排序:ASC升序 DESC降序"
   uid: String
 }
 
+type User {
+  username: String!
+  uid: Int!
+  child: User!
+}
+
 type Query {
-  getUser(order: UserOrder): Object!
+  getUser(order: UserPickOrder): User!
 }

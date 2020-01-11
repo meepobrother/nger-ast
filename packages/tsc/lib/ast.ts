@@ -15,7 +15,7 @@ export function toJson(that: any, visitor: Visitor, context?: any, keys: string[
     })
 }
 export abstract class Node {
-    __node: ts.Node;
+    __node: any;
     abstract visit(visitor: Visitor, context?: any): any;
     toJson(visitor: Visitor, context?: any, ...keys: any[]): any {
         return toJson(this, visitor, context, keys)
@@ -1632,7 +1632,7 @@ export class ArrayBindingPattern extends Node {
     desc: ts.SyntaxKind.Parameter
 })
 export class ParameterDeclaration extends Node {
-
+    __node: ts.ParameterDeclaration;
     @PlainPro()
     kind: ts.SyntaxKind.Parameter;
     @PlainPro()
@@ -3180,6 +3180,7 @@ export class FunctionSymbol extends Node {
     desc: { flags: ts.SymbolFlags.Class }
 })
 export class ClassSymbol extends Node {
+    __node: ts.Symbol;
     @PlainPro({ isClass: true })
     declarations: ClassDeclaration[];
     @PlainPro()

@@ -2,6 +2,7 @@ import * as ts from 'typescript';
 import { PlainModuleRef } from '@nger/plain';
 import * as ast from '@nger/ast.tsc';
 import * as graphql from '@nger/ast.graphql'
+import { getTypeName, createNameNode, createTypeNode } from './handlers/util';
 export class CompilerContext {
     typeChecker: ts.TypeChecker;
     moduleRef: PlainModuleRef<any>;
@@ -15,6 +16,9 @@ export class CompilerContext {
     subscription: graphql.FieldDefinitionNode[][] = [];
 
     typeArguments: any[];
+
+    isStatement: boolean;
+    isInput: boolean;
 
     get statements() {
         const statements: Map<string, any> = new Map();
@@ -115,8 +119,24 @@ export class CompilerContext {
         if (subscription) res.push(subscription)
         return res;
     }
-    setStatements(statements: any[]) {
-        this._statements.push(...statements)
+    cache: Map<string, any> = new Map();
+    setStatements(state: any): void {
+        switch (state.name.value) {
+            case 'String':
+                return;
+            default:
+                this._statements.push(state)
+        }
+    }
+    hasStatement(name: string): boolean {
+        return this._statements.some(it => {
+            return it.name.value === name
+        })
+    }
+    getStatement(name: string) {
+        return this._statements.find(it => {
+            return it.name.value === name
+        })
     }
     addChildren(key: string, child: CompilerContext) {
         this.children.set(key, child)
