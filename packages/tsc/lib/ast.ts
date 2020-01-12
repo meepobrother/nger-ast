@@ -768,6 +768,8 @@ export class KeywordTypeNode extends Node {
                 return 'undefined';
             case ts.SyntaxKind.StringKeyword:
                 return 'string';
+            case ts.SyntaxKind.NeverKeyword:
+                return 'never'
             default:
                 return 'nerver';
         }

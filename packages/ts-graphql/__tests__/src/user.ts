@@ -3,5 +3,7 @@ export interface User {
 }
 
 export interface User2 {
-    title: string;
+    title: string | null;
+    name: 'user' | 'meepo' | string;
+    uid: 1 | 2 | 3 | 4 | number;
 }

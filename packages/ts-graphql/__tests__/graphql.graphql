@@ -10,6 +10,8 @@ type User {
 
 type User2 {
   title: String!
+  name: String!
+  uid: Int!
 }
 
 union UserOrUser2 = User | User2

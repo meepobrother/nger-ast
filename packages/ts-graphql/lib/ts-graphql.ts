@@ -7,8 +7,9 @@ import * as ts from 'typescript';
 import { existsSync } from 'fs';
 import { DecoratorVisitor } from './interfaces/decorator';
 import { createNameNode, getTypeName } from './handlers/util';
-import { TypeReferenceNode, Identifier, PropertySymbol, MethodSignature } from '@nger/ast.tsc';
+import { TypeReferenceNode, Identifier, PropertySymbol, MethodSignature, StringLiteral } from '@nger/ast.tsc';
 import { NamingStrage } from './naming-strage';
+import { StringValueNode, IntValueNode } from '@nger/ast.graphql';
 export class TsGraphqlContext {
     graphql: graphql.DocumentNode = new graphql.DocumentNode();
 }
@@ -679,65 +680,65 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return obj;
     }
     visitJsxAttributes(node: ast.JsxAttributes, context?: any) {
-
+        console.log(`visitJsxAttributes`)
     }
     visitJsxOpeningFragment(node: ast.JsxOpeningFragment, context?: any) {
-
+        console.log(`visitJsxOpeningFragment`)
     }
     visitJsxClosingFragment(node: ast.JsxClosingFragment, context?: any) {
-
+        console.log(`visitJsxClosingFragment`)
     }
     visitJsxFragment(node: ast.JsxFragment, context?: any) {
-
+        console.log(`visitJsxFragment`)
     }
     visitJsxSelfClosingElement(node: ast.JsxSelfClosingElement, context?: any) {
-
+        console.log(`visitJsxSelfClosingElement`)
     }
     visitJsxOpeningElement(node: ast.JsxOpeningElement, context?: any) {
-
+        console.log(`visitJsxOpeningElement`)
     }
     visitJsxClosingElement(node: ast.JsxClosingElement, context?: any) {
-
+        console.log(`visitJsxClosingElement`)
     }
     visitJsxElement(node: ast.JsxElement, context?: any) {
-
+        console.log(`visitJsxElement`)
     }
     visitMetaProperty(node: ast.MetaProperty, context?: any) {
-
+        console.log(`visitMetaProperty`)
     }
     visitArrayLiteralExpression(node: ast.ArrayLiteralExpression, context?: any) {
         const { elements } = node.toJson(this, context);
         return elements;
     }
     visitParenthesizedExpression(node: ast.ParenthesizedExpression, context?: any) {
-
+        console.log(`visitParenthesizedExpression`)
     }
     visitTemplateHead(node: ast.TemplateHead, context?: any) {
-
+        console.log(`visitTemplateHead`)
     }
     visitTemplateExpression(node: ast.TemplateExpression, context?: any) {
-
+        console.log(`visitTemplateExpression`)
     }
     visitTemplateSpan(node: ast.TemplateSpan, context?: any) {
-
+        console.log(`visitTemplateSpan`)
     }
     visitTemplateMiddle(node: ast.TemplateMiddle, context?: any) {
-
+        console.log(`visitTemplateMiddle`)
     }
     visitFunctionExpression(node: ast.FunctionExpression, context?: any) {
-
+        console.log(`visitFunctionExpression`)
     }
     visitTemplateTail(node: ast.TemplateTail, context?: any) {
-
+        console.log(`visitTemplateTail`)
     }
     visitThisExpression(node: ast.ThisExpression, context?: any) {
-
+        console.log(`visitThisExpression`)
     }
     visitSuperExpression(node: ast.SuperExpression, context?: any) {
-
+        console.log(`visitSuperExpression`)
     }
     visitImportExpression(node: ast.ImportExpression, context?: any) {
-
+        console.log(`visitImportExpression`)
     }
     visitNullLiteral(node: ast.NullLiteral, context?: any) {
         return new graphql.NullValueNode()
@@ -752,65 +753,65 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitPartiallyEmittedExpression(node: ast.PartiallyEmittedExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitNonNullExpression(node: ast.NonNullExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitPostfixUnaryExpression(node: ast.PostfixUnaryExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitPrefixUnaryExpression(node: ast.PrefixUnaryExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitDeleteExpression(node: ast.DeleteExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitTypeOfExpression(node: ast.TypeOfExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitVoidExpression(node: ast.VoidExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitAwaitExpression(node: ast.AwaitExpression, context?: any) {
         const { expression } = node.toJson(this, context);
         return expression;
     }
     visitTypeAssertion(node: ast.TypeAssertion, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitCommaListExpression(node: ast.CommaListExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitJsxExpression(node: ast.JsxExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitAsExpression(node: ast.AsExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitNewExpression(node: ast.NewExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitSpreadElement(node: ast.SpreadElement, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitConditionalExpression(node: ast.ConditionalExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitElementAccessExpression(node: ast.ElementAccessExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitOmittedExpression(node: ast.OmittedExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitYieldExpression(node: ast.YieldExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitSyntheticExpression(node: ast.SyntheticExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitPropertyAccessExpression(node: ast.PropertyAccessExpression, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitBigIntLiteral(node: ast.BigIntLiteral, context?: any) {
         const ast = new graphql.StringValueNode()
@@ -823,7 +824,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitSemicolonClassElement(node: ast.SemicolonClassElement, context?: any) {
-
+        console.log(`visitPartiallyEmittedExpression`)
     }
     visitHeritageClause(node: ast.HeritageClause, context?: any) {
         const { token, types } = node.toJson(this, context);
@@ -844,9 +845,8 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ast.type = type;
         return ast;
     }
-
     visitExternalModuleReference(node: ast.ExternalModuleReference, context?: any) {
-
+        console.log(`visitExternalModuleReference`)
     }
     visitNamedExports(node: ast.NamedExports, context?: any) {
         const { elements } = node.toJson(this, context);
@@ -865,7 +865,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
     }
     visitEndOfFileToken(node: ast.EndOfFileToken, context?: any) {
-
+        console.log(`visitEndOfFileToken`)
     }
     visitEnumMember(node: ast.EnumMember, context?: any) {
         const { name, initializer } = node.toJson(this, context);
@@ -874,10 +874,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitModuleDeclaration(node: ast.ModuleDeclaration, context?: any) {
-
+        console.log(`visitModuleDeclaration`)
     }
     visitImportEqualsDeclaration(node: ast.ImportEqualsDeclaration, context?: any) {
-
+        console.log(`visitImportEqualsDeclaration`)
     }
     visitFunctionDeclaration(node: ast.FunctionDeclaration, context?: any) {
         if (node.body) {
@@ -887,15 +887,19 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitIndexSignatureDeclaration(node: ast.IndexSignatureDeclaration, context?: any) {
-
+        console.log(`visitIndexSignatureDeclaration`)
     }
     visitMethodSignature(node: ast.MethodSignature, context?: any) {
+        console.log(`visitMethodSignature`)
     }
     visitConstructSignatureDeclaration(node: ast.ConstructSignatureDeclaration, context?: any) {
+        console.log(`visitConstructSignatureDeclaration`)
     }
     visitCallSignatureDeclaration(node: ast.CallSignatureDeclaration, context?: any) {
+        console.log(`visitCallSignatureDeclaration`)
     }
     visitArrowFunction(node: ast.ArrowFunction, context?: any) {
+        console.log(`visitArrowFunction`)
     }
     visitEnumDeclaration(node: ast.EnumDeclaration, context: CompilerContext): any {
         const { name, members } = node.toJson(this, context);
@@ -910,14 +914,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return name ? name : expression;
     }
     visitJSDocSignature(node: ast.JSDocSignature, context: CompilerContext) {
-
+        console.log(`visitJSDocSignature`)
     }
     visitJSDocCallbackTag(node: ast.JSDocCallbackTag, context: CompilerContext) {
-
+        console.log(`visitJSDocCallbackTag`)
     }
 
     visitJSDocTemplateTag(node: ast.JSDocTemplateTag, context: CompilerContext) {
-
+        console.log(`visitJSDocTemplateTag`)
     }
     visitJSDocParameterTag(node: ast.JSDocParameterTag, context: CompilerContext) {
         const { name, typeExpression, comment, tagName, isBracketed, isNameFirst } = node.toJson(this, context);
@@ -934,7 +938,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitClassExpression(node: ast.ClassExpression, context?: any) {
-
+        console.log(`visitClassExpression`)
     }
 
     visitDecorator(node: ast.Decorator, context: CompilerContext) {
@@ -950,13 +954,13 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return [...(tags || []), ast].flat();
     }
     visitJSDocTypeLiteral(node: ast.JSDocTypeLiteral, context?: any) {
-
+        console.log(`visitJSDocTypeLiteral`)
     }
     visitJSDocPropertyTag(node: ast.JSDocPropertyTag, context?: any) {
-
+        console.log(`visitJSDocPropertyTag`)
     }
     visitJSDocTypedefTag(node: ast.JSDocTypedefTag, context?: any) {
-
+        console.log(`visitJSDocTypedefTag`)
     }
 
     visitPropertySignature(node: ast.PropertySignature, context: CompilerContext) {
@@ -1002,7 +1006,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return new graphql.StringValueNode(rawText ? rawText : text);
     }
     visitGetAccessorDeclaration(node: ast.GetAccessorDeclaration, context?: any) {
-
+        console.log(`visitGetAccessorDeclaration`)
     }
 
     visitSourceFile(node: ast.SourceFile, context: CompilerContext) {
@@ -1041,7 +1045,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return ast;
     }
     visitQualifiedName(node: ast.QualifiedName, context?: any) {
-
+        console.log(`visitQualifiedName`)
     }
     visitIdentifier(node: ast.Identifier, context: CompilerContext) {
         const ast = new graphql.NameNode();
@@ -1052,6 +1056,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitConstructorDeclaration(node: ast.ConstructorDeclaration, context?: any) {
+        console.log(`visitConstructorDeclaration`)
     }
     visitExpressionStatement(node: ast.ExpressionStatement, context?: any) {
         const { expression } = node.toJson(this, context);
@@ -1081,7 +1086,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
 
     visitExportAssignment(node: ast.ExportAssignment, context?: any) {
-
+        console.log(`visitExportAssignment`)
     }
     // type
     visitJSDocOptionalType(node: ast.JSDocOptionalType, context?: any) {
@@ -1093,8 +1098,65 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitInferTypeNode(node: ast.InferTypeNode, context: any) {
         console.log(`visitInferTypeNode not implement`)
     }
-    visitUnionTypeNode(node: ast.UnionTypeNode, context: CompilerContext) {
-        console.log(`visitUnionTypeNode not implement`)
+    visitKeywordTypeNode(node: ast.KeywordTypeNode, context: CompilerContext) {
+        const { keyword } = node;
+        let value: string = '';
+        switch (keyword) {
+            case 'string':
+                value = 'String';
+                break;
+            case 'any':
+                value = 'Any';
+                break;
+            case 'number':
+                value = 'Int';
+                break;
+            case 'bigint':
+                value = 'BigInt';
+                break;
+            case 'undefined':
+            case 'void':
+            case 'never':
+            case 'void':
+                break;
+            case 'boolean':
+                value = 'Boolean';
+                break;
+            default:
+                break;
+        }
+        if (value.length > 0) return new graphql.NameNode(value);
+    }
+    visitUnionTypeNode(node: ast.UnionTypeNode, context: CompilerContext): any {
+        let types = node.types
+            .map(it => it.visit(this, context))
+            .filter(it => !!it)
+        if (types.length === 1) {
+            return types[0]
+        }
+        const isString = types.every(it => {
+            if (it instanceof StringValueNode) return true;
+            if (it instanceof graphql.NameNode) {
+                return it.value === 'String'
+            }
+            return false;
+        });
+        if (isString) {
+            return new graphql.NameNode('String')
+        }
+        const isNumber = types.every(it => {
+            if (it instanceof IntValueNode) {
+                return true;
+            }
+            if (it instanceof graphql.NameNode) {
+                return it.value === 'Int' || it.value === 'Float'
+            }
+            return false;
+        })
+        if (isNumber) {
+            return new graphql.NameNode('Int')
+        }
+        return new graphql.NameNode(types.map((it: graphql.NameNode) => it.value).join('OR'))
     }
     visitIntersectionTypeNode(node: ast.IntersectionTypeNode, context: any) {
         console.log(`visitIntersectionTypeNode not implement`)
@@ -1102,8 +1164,9 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitIndexedAccessTypeNode(node: ast.IndexedAccessTypeNode, context: any) {
         console.log(`visitIndexedAccessTypeNode not implement`)
     }
-    visitLiteralTypeNode(node: ast.LiteralTypeNode, context: any) {
-        console.log(`visitLiteralTypeNode not implement`)
+    visitLiteralTypeNode(node: ast.LiteralTypeNode, context: any): any {
+        const { literal } = node;
+        return literal.visit(this, context)
     }
     visitTypeQueryNode(node: ast.TypeQueryNode, context: any) {
         console.log(`visitTypeQueryNode not implement`)
@@ -1138,38 +1201,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitParenthesizedTypeNode(node: ast.ParenthesizedTypeNode, context?: any) {
         console.log(`visitParenthesizedTypeNode not implement`)
     }
-    visitKeywordTypeNode(node: ast.KeywordTypeNode, context: CompilerContext) {
-        const { keyword } = node;
-        let value: string = 'Json';
-        switch (keyword) {
-            case 'string':
-                value = 'String';
-                break;
-            case 'any':
-                value = 'Object';
-                break;
-            case 'number':
-                value = 'Int';
-                break;
-            case 'void':
-                value = 'Void';
-                break;
-            case 'boolean':
-                value = 'Boolean';
-                break;
-            default:
-                value = `Object`;
-                break;
-        }
-        return new graphql.NameNode(value);
-    }
+
     static typeReferenceNode: Map<any, any> = new Map();
     namingStrage: NamingStrage = new NamingStrage()
     typeUnionToGraphqlInput(type: ts.UnionType, context: CompilerContext) {
         let node = type.getNonNullableType();
         if (node.flags === ts.TypeFlags.Union) {
             const _node = node as ts.UnionType;
-            let types = _node.types;
+            let types = _node.types.filter(it => it.flags !== ts.TypeFlags.Null);
             if (types.length === 1) {
                 if (context.isInput) return this.typeToGraphqlInput(types[0], context)
                 return this.typeToGraphqlType(types[0], context)
@@ -1206,6 +1245,9 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 context.setStatements(unionTypeNode);
                 return unionTypeNode.name;
             }
+        }
+        if (node.flags === ts.TypeFlags.Object) {
+            debugger;
         }
         if (context.isInput) return this.typeToGraphqlInput(node, context)
         return this.typeToGraphqlType(node, context)
