@@ -71,12 +71,21 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         const scalar = new graphql.ScalarTypeDefinitionNode();
         if (decorator.arguments) {
             decorator.arguments.filter(it => !!it).forEach(it => {
+                if (it instanceof graphql.ObjectValueNode) {
+                    it.fields.map(it => {
+                        if (it.name.value === 'name') {
+                            if (it.value instanceof graphql.StringValueNode) {
+                                scalar.name = new graphql.NameNode(it.value.value);
+                            }
+                        }
+                    })
+                }
                 if (it instanceof graphql.StringValueNode) {
                     scalar.name = new graphql.NameNode(it.value);
                 }
             })
         }
-        context.setStatements([scalar])
+        context.setStatements(scalar)
     }
     Magnus(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         const { name, members, heritageClauses } = node.toJson(visitor, context)

@@ -121,6 +121,7 @@ export class CompilerContext {
     }
     cache: Map<string, any> = new Map();
     setStatements(state: any): void {
+        if (!state.name) return;
         switch (state.name.value) {
             case 'String':
                 return;
