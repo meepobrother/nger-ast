@@ -9,9 +9,11 @@ type User {
 }
 
 type User2 {
-  title: String!
-  name: String!
-  uid: Int!
+  title: User2Title!
+}
+
+type User2Title {
+  demo: String
 }
 
 union UserOrUser2 = User | User2

@@ -1187,7 +1187,7 @@ export class TypeLiteralNode extends Node {
     @PlainPro({
         isClass: true
     })
-    members: TypeElement;
+    members: TypeElement[];
     visit(visitor: Visitor, context?: any) {
         return visitor.visitTypeLiteralNode(this, context)
     }
