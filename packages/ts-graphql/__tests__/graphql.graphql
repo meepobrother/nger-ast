@@ -5,5 +5,5 @@ input UserAndUser2PickOrder {
 }
 
 type Query {
-  getUser(order: UserAndUser2PickOrder): [Any]
+  getUser(order: UserAndUser2PickOrder): Any
 }

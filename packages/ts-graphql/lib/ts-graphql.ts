@@ -321,6 +321,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
                         new graphql.NameNode('Any')
                     )
                     return list;
+                } else {
+                    return new graphql.NamedTypeNode(
+                        new graphql.NameNode('Any')
+                    )
                 }
             }
         }
@@ -334,7 +338,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
         if (node.stringIndexInfo) {
             return new graphql.NameNode('ObjectLiteral')
         }
-        debugger;
         let fields: any[] = [];
         members && members.forEach((member, key) => {
             const field = new graphql.FieldDefinitionNode();
@@ -561,6 +564,8 @@ export class TsGraphqlVisitor implements ast.Visitor {
                                         ast.type = new graphql.NamedTypeNode(
                                             type.name
                                         )
+                                    } else if (type instanceof graphql.NamedTypeNode) {
+                                        ast.type = type;
                                     } else {
                                         debugger;
                                     }

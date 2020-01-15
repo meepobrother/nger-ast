@@ -45,7 +45,9 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
             });
         }
     }
-    Resolver(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode) { }
+    Resolver(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode) {
+        return this.Controller(node, visitor, context, decorator)
+    }
     Controller(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
         const ast = new graphql.ObjectTypeDefinitionNode();
         if (node.name) {
@@ -88,18 +90,7 @@ export class NestDecoratorVisitor implements DecoratorVisitor {
         context.setStatements(scalar)
     }
     Magnus(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): void {
-        const { name, members, heritageClauses } = node.toJson(visitor, context)
-        const ast = new graphql.ObjectTypeDefinitionNode();
-        ast.name = name;
-        ast.fields = members;
-        if (heritageClauses) {
-            ast.interfaces = [];
-            heritageClauses.map((it: any) => {
-                if (it.token === ts.SyntaxKind.ExtendsKeyword) {
-                    debugger;
-                }
-            })
-        }
+        return this.Controller(node, visitor, context, decorator)
     }
     Entity(node: ast.ClassDeclaration, visitor: ast.Visitor, context: CompilerContext, decorator: graphql.DirectiveNode): any {
         return this.Class(node, visitor, context)
