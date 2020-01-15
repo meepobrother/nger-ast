@@ -4,11 +4,6 @@ input UserAndUser2PickOrder {
   title: String
 }
 
-type OrderDemo {
-  title: String!
-  demo: OrderDemo!
-}
-
 type Query {
-  getUser(order: UserAndUser2PickOrder): OrderDemo
+  getUser(order: UserAndUser2PickOrder): [Any]
 }

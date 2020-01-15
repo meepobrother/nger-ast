@@ -56,13 +56,11 @@ export class TsGraphqlVisitor implements ast.Visitor {
         );
         const _declarations = symbol.getDeclarations();
         const _members = symbol.members
-        _members!.forEach(member => {
+        _members && _members.forEach(member => {
             const typeToString = context.typeChecker.typeToString(
                 context.typeChecker.getTypeOfSymbolAtLocation(member!, member!.valueDeclaration)
             );
-            // debugger;
         })
-        // debugger;
         const { declarations, name, id, flags, members, valueDeclaration } = node;
         if (valueDeclaration) {
             return valueDeclaration.visit(this, context)
@@ -314,7 +312,17 @@ export class TsGraphqlVisitor implements ast.Visitor {
             return declarations[0].visit(this, context)
         }
         if (node.symbol) {
-            return node.symbol.visit(this, context)
+            if (node.symbol.visit && typeof node.symbol.visit === 'function') {
+                return node.symbol.visit(this, context)
+            } else {
+                if (node.symbol.name === 'Array') {
+                    const list = new graphql.ListTypeNode()
+                    list.type = new graphql.NamedTypeNode(
+                        new graphql.NameNode('Any')
+                    )
+                    return list;
+                }
+            }
         }
         if (node.numberIndexInfo) {
             const type = new graphql.ListTypeNode();
@@ -326,9 +334,9 @@ export class TsGraphqlVisitor implements ast.Visitor {
         if (node.stringIndexInfo) {
             return new graphql.NameNode('ObjectLiteral')
         }
-        let fields: any[] = [];
         debugger;
-        members.forEach((member, key) => {
+        let fields: any[] = [];
+        members && members.forEach((member, key) => {
             const field = new graphql.FieldDefinitionNode();
             field.name = new graphql.NameNode(key);
             if (member.type) {
@@ -529,26 +537,33 @@ export class TsGraphqlVisitor implements ast.Visitor {
                             const res = context.typeChecker.getReturnTypeOfSignature(callSignatures[0])
                             const resAst = context.create(res)
                             if (resAst) {
-                                const type = resAst.visit(this, context)
-                                const graphqlT = new graphql.ObjectTypeDefinitionNode();
-                                graphqlT.name = new graphql.NameNode(this.toUpperCaseFirst(ast.name.value) + 'Output');
-                                if (Array.isArray(type)) {
-                                    graphqlT.fields = type;
-                                    context.setStatements(graphqlT)
+                                const intrinsicName = Reflect.get(resAst, 'intrinsicName')
+                                if (intrinsicName) {
                                     ast.type = new graphql.NamedTypeNode(
-                                        graphqlT.name
-                                    )
-                                } else if (type instanceof graphql.NameNode) {
-                                    ast.type = new graphql.NamedTypeNode(type)
-                                } else if (type instanceof graphql.ListTypeNode) {
-                                    ast.type = type;
-                                } else if (type instanceof graphql.ObjectTypeDefinitionNode) {
-                                    context.setStatements(type)
-                                    ast.type = new graphql.NamedTypeNode(
-                                        type.name
+                                        this.createNameType(intrinsicName)
                                     )
                                 } else {
-                                    debugger;
+                                    const type = resAst.visit(this, context)
+                                    const graphqlT = new graphql.ObjectTypeDefinitionNode();
+                                    graphqlT.name = new graphql.NameNode(this.toUpperCaseFirst(ast.name.value) + 'Output');
+                                    if (Array.isArray(type)) {
+                                        graphqlT.fields = type;
+                                        context.setStatements(graphqlT)
+                                        ast.type = new graphql.NamedTypeNode(
+                                            graphqlT.name
+                                        )
+                                    } else if (type instanceof graphql.NameNode) {
+                                        ast.type = new graphql.NamedTypeNode(type)
+                                    } else if (type instanceof graphql.ListTypeNode) {
+                                        ast.type = type;
+                                    } else if (type instanceof graphql.ObjectTypeDefinitionNode) {
+                                        context.setStatements(type)
+                                        ast.type = new graphql.NamedTypeNode(
+                                            type.name
+                                        )
+                                    } else {
+                                        debugger;
+                                    }
                                 }
                             }
                         }

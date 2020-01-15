@@ -10,8 +10,6 @@ interface OrderDemo{
 export class OrderController {
     @Query()
     getUser(order?: Order<Pick<User & User2, 'username' | 'uid' | 'title'>>) {
-        return {
-            title: 'demo'
-        } as OrderDemo;
+        return [true]
     }
 }
