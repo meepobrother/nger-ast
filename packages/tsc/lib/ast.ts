@@ -3114,6 +3114,10 @@ export type Symbol = FunctionScopedVariableSymbol | BlockScopedVariableSymbol;
 export class FunctionScopedVariableSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.FunctionScopedVariable;
+
+    @PlainPro()
+    intrinsicName: string;
+
     visit(visitor: Visitor, context?: any) {
         return visitor.visitFunctionScopedVariableSymbol(this, context)
     }
@@ -3140,6 +3144,8 @@ export class PropertySymbol extends Node {
     escapedName: string;
     @PlainPro({ isClass: true })
     valueDeclaration: PropertySignature;
+    @PlainPro()
+    intrinsicName: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitPropertySymbol(this, context)
     }
@@ -3386,6 +3392,16 @@ export class TypeAliasSymbol extends Node {
     escapedName: string;
     @PlainPro()
     name: string;
+    @PlainPro()
+    members: Map<string, any>;
+    @PlainPro()
+    numberIndexInfo: any;
+    @PlainPro()
+    stringIndexInfo: any;
+    @PlainPro({
+        isClass: true
+    })
+    symbol: any;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitTypeAliasSymbol(this, context)
     }
@@ -3455,6 +3471,9 @@ export class TransientSymbol extends Node {
 export class AssignmentSymbol extends Node {
     @PlainPro()
     flags: ts.SymbolFlags.Assignment;
+
+    @PlainPro()
+    intrinsicName: string;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitAssignmentSymbol(this, context)
     }

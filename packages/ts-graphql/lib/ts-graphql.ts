@@ -22,14 +22,21 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return nodes ? nodes.map(it => this.visit(it, context)) : [];
     }
     visitFunctionScopedVariableSymbol(node: ast.FunctionScopedVariableSymbol, context?: any) {
+        if (node.intrinsicName) {
+            return this.createNameType(node.intrinsicName)
+        }
     }
     visitBlockScopedVariableSymbol(node: ast.BlockScopedVariableSymbol, context?: any) {
     }
     visitPropertySymbol(node: ast.PropertySymbol, context?: any): any {
         const { valueDeclaration, name, escapedName, flags } = node;
+        if (node.intrinsicName) {
+            return this.createNameType(node.intrinsicName)
+        }
         if (valueDeclaration) {
             return node.valueDeclaration.visit(this, context)
         }
+        debugger;
     }
     visitEnumMemberSymbol(node: ast.EnumMemberSymbol, context?: any) {
     }
@@ -302,10 +309,50 @@ export class TsGraphqlVisitor implements ast.Visitor {
         return name;
     }
     visitTypeAliasSymbol(node: ast.TypeAliasSymbol, context: CompilerContext): any {
-        const { name, declarations } = node;
+        const { name, declarations, members } = node;
         if (declarations && declarations.length > 0) {
             return declarations[0].visit(this, context)
         }
+        if (node.symbol) {
+            return node.symbol.visit(this, context)
+        }
+        if (node.numberIndexInfo) {
+            const type = new graphql.ListTypeNode();
+            type.type = new graphql.NamedTypeNode(
+                new graphql.NameNode('Any')
+            )
+            return type;
+        }
+        if (node.stringIndexInfo) {
+            return new graphql.NameNode('ObjectLiteral')
+        }
+        let fields: any[] = [];
+        debugger;
+        members.forEach((member, key) => {
+            const field = new graphql.FieldDefinitionNode();
+            field.name = new graphql.NameNode(key);
+            if (member.type) {
+                const ast = context.create(member.type)
+                if (ast) {
+                    const res = ast.visit(this, context)
+                    if (res instanceof graphql.NameNode) {
+                        field.type = new graphql.NamedTypeNode(res)
+                    }
+                }
+            } else {
+                const valueDeclaration = context.create(member.valueDeclaration)
+                if (valueDeclaration) {
+                    const type = valueDeclaration.visit(this, context)
+                    if (type instanceof graphql.FieldDefinitionNode) {
+                        fields.push(type)
+                        return;
+                    }
+                    debugger;
+                }
+            }
+            fields.push(field)
+        })
+        return fields;
     }
     visitExportValueSymbol(node: ast.ExportValueSymbol, context?: any) {
     }
@@ -318,6 +365,9 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitTransientSymbol(node: ast.TransientSymbol, context?: any) {
     }
     visitAssignmentSymbol(node: ast.AssignmentSymbol, context?: any) {
+        if (node.intrinsicName) {
+            return this.createNameType(node.intrinsicName)
+        }
     }
     visitModuleExportsSymbol(node: ast.ModuleExportsSymbol, context?: any) {
     }
@@ -472,11 +522,42 @@ export class TsGraphqlVisitor implements ast.Visitor {
                         ast.type = new graphql.NonNullTypeNode(type)
                     }
                 } else {
-                    if (!ast.type) {
-                        const sourceFile = node.__node.getSourceFile();
-                        const filename = sourceFile.fileName;
-                        console.error(`missing type definition! \n${filename}:${ts.getLineAndCharacterOfPosition(sourceFile, node.__node.end).line}\n${node.__node.getText()}\n\n`)
+                    if (node.name) {
+                        const typeNode = context.typeChecker.getTypeAtLocation(node.name.__node)
+                        const callSignatures = typeNode.getCallSignatures()
+                        if (callSignatures && callSignatures.length === 1) {
+                            const res = context.typeChecker.getReturnTypeOfSignature(callSignatures[0])
+                            const resAst = context.create(res)
+                            if (resAst) {
+                                const type = resAst.visit(this, context)
+                                const graphqlT = new graphql.ObjectTypeDefinitionNode();
+                                graphqlT.name = new graphql.NameNode(this.toUpperCaseFirst(ast.name.value) + 'Output');
+                                if (Array.isArray(type)) {
+                                    graphqlT.fields = type;
+                                    context.setStatements(graphqlT)
+                                    ast.type = new graphql.NamedTypeNode(
+                                        graphqlT.name
+                                    )
+                                } else if (type instanceof graphql.NameNode) {
+                                    ast.type = new graphql.NamedTypeNode(type)
+                                } else if (type instanceof graphql.ListTypeNode) {
+                                    ast.type = type;
+                                } else if (type instanceof graphql.ObjectTypeDefinitionNode) {
+                                    context.setStatements(type)
+                                    ast.type = new graphql.NamedTypeNode(
+                                        type.name
+                                    )
+                                } else {
+                                    debugger;
+                                }
+                            }
+                        }
                     }
+                }
+                if (!ast.type) {
+                    const sourceFile = node.__node.getSourceFile();
+                    const filename = sourceFile.fileName;
+                    console.error(`missing type definition! \n${filename}:${ts.getLineAndCharacterOfPosition(sourceFile, node.__node.end).line}\n${node.__node.getText()}\n\n`)
                 }
                 if (node.jsDoc) {
                     const jsDoc = node.jsDoc.map(it => it.visit(this, context)).flat();
@@ -978,11 +1059,15 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
         if (node.type) {
             const type = node.type.visit(this, context)
-            if (field.type instanceof graphql.NameNode) {
+            if (type instanceof graphql.NameNode) {
                 field.type = new graphql.NamedTypeNode(type)
             } else if (type instanceof graphql.FieldDefinitionNode) {
                 type.name = field.name;
                 return type;
+            } else if (type instanceof graphql.NamedTypeNode) {
+                field.type = type;
+            } else if (type instanceof graphql.ListTypeNode) {
+                field.type = type;
             } else {
                 debugger;
             }
@@ -1126,8 +1211,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
     visitInferTypeNode(node: ast.InferTypeNode, context: any) {
 
     }
-    visitKeywordTypeNode(node: ast.KeywordTypeNode, context: CompilerContext) {
-        const { keyword } = node;
+    createNameType(keyword: string) {
         let value: string = '';
         switch (keyword) {
             case 'object':
@@ -1157,6 +1241,10 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 break;
         }
         if (value.length > 0) return new graphql.NameNode(value);
+    }
+    visitKeywordTypeNode(node: ast.KeywordTypeNode, context: CompilerContext) {
+        const { keyword } = node;
+        return this.createNameType(keyword);
     }
     visitUnionTypeNode(node: ast.UnionTypeNode, context: CompilerContext): any {
         let types = node.types

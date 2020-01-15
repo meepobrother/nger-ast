@@ -4,20 +4,11 @@ input UserAndUser2PickOrder {
   title: String
 }
 
-type User {
-  getName(name: String!): String
+type OrderDemo {
+  title: String!
+  demo: OrderDemo!
 }
-
-type User2 {
-  title: User2Title!
-}
-
-type User2Title {
-  demo: String
-}
-
-union UserOrUser2 = User | User2
 
 type Query {
-  getUser(order: UserAndUser2PickOrder): [UserOrUser2]!
+  getUser(order: UserAndUser2PickOrder): OrderDemo
 }
