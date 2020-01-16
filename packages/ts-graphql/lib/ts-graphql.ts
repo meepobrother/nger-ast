@@ -1511,6 +1511,15 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ), context);
         const statement = context.getStatement(typeToString)
         if (statement) {
+            if(statement instanceof graphql.ScalarTypeDefinitionNode){
+                return new graphql.NameNode(typeToString)
+            }
+            if(statement instanceof graphql.EnumTypeDefinitionNode){
+                return new graphql.NameNode(typeToString)
+            }
+            if(statement instanceof graphql.UnionTypeDefinitionNode){
+                return new graphql.NameNode(typeToString)
+            }
             const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
             if (!isInput) {
                 typeToString += 'Input'
@@ -1688,6 +1697,15 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ), context);
         const statement = context.getStatement(typeToString)
         if (statement) {
+            if(statement instanceof graphql.ScalarTypeDefinitionNode){
+                return new graphql.NameNode(typeToString)
+            }
+            if(statement instanceof graphql.EnumTypeDefinitionNode){
+                return new graphql.NameNode(typeToString)
+            }
+            if(statement instanceof graphql.UnionTypeDefinitionNode){
+                return new graphql.NameNode(typeToString)
+            }
             const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
             if (isInput) {
                 typeToString += 'Type'

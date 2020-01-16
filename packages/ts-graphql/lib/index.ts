@@ -3,7 +3,7 @@ export * from './ts-graphql';
 import { CompilerContext } from './compiler';
 import { TsGraphqlVisitor } from './ts-graphql';
 import { Project } from '@nger/ast.tsc';
-import { DocumentNode } from '@nger/ast.graphql';
+import { DocumentNode, ScalarTypeDefinitionNode, NameNode } from '@nger/ast.graphql';
 import { NestDecoratorVisitor } from './handlers/decorator';
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -27,6 +27,18 @@ export function tsGraphqlAst(src: string, tsconfig?: string): DocumentNode | und
     const tsGraphqlVisitor = new TsGraphqlVisitor(new NestDecoratorVisitor());
     const node = project.getSourceFile(src);
     if (node) {
+        const upload = new ScalarTypeDefinitionNode()
+        upload.name = new NameNode(`Upload`);
+        compilerContext.setStatements(upload);
+
+        const _any = new ScalarTypeDefinitionNode()
+        _any.name = new NameNode(`_Any`);
+        compilerContext.setStatements(_any);
+
+        const _filedSet = new ScalarTypeDefinitionNode()
+        _filedSet.name = new NameNode(`_FieldSet`);
+        compilerContext.setStatements(_filedSet);
+        
         tsGraphqlVisitor.visitSourceFile(node, compilerContext)
         const doc = new DocumentNode();
         doc.definitions = compilerContext.statements;

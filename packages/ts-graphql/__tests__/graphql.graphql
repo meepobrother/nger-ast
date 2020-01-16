@@ -1,3 +1,9 @@
+scalar Upload
+
+scalar _Any
+
+scalar _FieldSet
+
 type User @key(fields: "username") @key(fields: "code") {
   username: String!
   id: String!
