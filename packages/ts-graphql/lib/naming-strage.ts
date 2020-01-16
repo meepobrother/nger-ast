@@ -50,24 +50,12 @@ export class NamingStrage {
     handlerName(val: string) {
         switch (val) {
             case 'Int':
-            case 'Int32':
-            case 'Int64':
-            case 'Uint32':
-            case 'Sint32':
-            case 'Uint64':
-            case 'Int64':
-            case 'Sint64':
             case 'number':
                 return 'Int';
             case 'String':
             case 'string':
                 return 'String';
-            case 'Double':
             case 'Float':
-            case 'Fixed32':
-            case 'Sfixed32':
-            case 'Fixed64':
-            case 'Sfixed64':
                 return 'Float';
             case 'Bool':
             case 'Boolean':

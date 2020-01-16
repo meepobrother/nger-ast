@@ -1511,14 +1511,17 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ), context);
         const statement = context.getStatement(typeToString)
         if (statement) {
-            if(statement instanceof graphql.ScalarTypeDefinitionNode){
+            if (statement instanceof graphql.ScalarTypeDefinitionNode) {
                 return new graphql.NameNode(typeToString)
             }
-            if(statement instanceof graphql.EnumTypeDefinitionNode){
+            if (statement instanceof graphql.EnumTypeDefinitionNode) {
                 return new graphql.NameNode(typeToString)
             }
-            if(statement instanceof graphql.UnionTypeDefinitionNode){
+            if (statement instanceof graphql.UnionTypeDefinitionNode) {
                 return new graphql.NameNode(typeToString)
+            }
+            if (typeToString === 'any') {
+                return new graphql.NameNode('Any')
             }
             const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
             if (!isInput) {
@@ -1697,14 +1700,17 @@ export class TsGraphqlVisitor implements ast.Visitor {
         ), context);
         const statement = context.getStatement(typeToString)
         if (statement) {
-            if(statement instanceof graphql.ScalarTypeDefinitionNode){
+            if (statement instanceof graphql.ScalarTypeDefinitionNode) {
                 return new graphql.NameNode(typeToString)
             }
-            if(statement instanceof graphql.EnumTypeDefinitionNode){
+            if (statement instanceof graphql.EnumTypeDefinitionNode) {
                 return new graphql.NameNode(typeToString)
             }
-            if(statement instanceof graphql.UnionTypeDefinitionNode){
+            if (statement instanceof graphql.UnionTypeDefinitionNode) {
                 return new graphql.NameNode(typeToString)
+            }
+            if (typeToString === 'any') {
+                return new graphql.NameNode('Any')
             }
             const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
             if (isInput) {
@@ -1843,6 +1849,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 case "Promise":
                     return node.typeArguments[0].visit(this, context)
             }
+        }
+        switch (typeName.value) {
+            case 'Type':
+                return new graphql.NameNode('Any');
+            case 'Upload':
+                return new graphql.NameNode('Upload');
+            case 'Function':
+                return new graphql.NameNode('Any');
         }
         const type = context.typeChecker.getTypeFromTypeNode(node.__node)
         if (context.isInput) {
