@@ -1653,6 +1653,11 @@ export class ParameterDeclaration extends Node {
         isClass: true
     })
     initializer?: Expression;
+
+    @PlainPro({
+        isClass: true
+    })
+    decorators?: any;
     visit(visitor: Visitor, context?: any) {
         return visitor.visitParameterDeclaration(this, context)
     }

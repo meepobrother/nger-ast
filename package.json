@@ -10,6 +10,7 @@
   "dependencies": {
     "@nger/ast.ts-graphql": "^1.1.7",
     "@nger/core": "^1.9.15",
-    "@nger/graphql": "^1.0.19"
+    "@nger/graphql": "^1.0.19",
+    "@nger/typeorm": "^0.0.12"
   }
 }

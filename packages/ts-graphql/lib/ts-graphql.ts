@@ -7,7 +7,7 @@ import * as ts from 'typescript';
 import { existsSync } from 'fs';
 import { DecoratorVisitor } from './interfaces/decorator';
 import { createNameNode, getTypeName } from './handlers/util';
-import { MethodSignature } from '@nger/ast.tsc';
+import { MethodSignature, BooleanLiteral } from '@nger/ast.tsc';
 import { NamingStrage } from './naming-strage';
 import { StringValueNode, IntValueNode } from '@nger/ast.graphql';
 export class TsGraphqlContext {
@@ -517,14 +517,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
                         }
                     }
                 }
-                if (node.parameters) {
-                    const old = !!context.isInput;
-                    context.isInput = true;
-                    ast.arguments = node.parameters.map(it => {
-                        return it.visit(this, context)
-                    });
-                    context.isInput = old;
-                }
                 if (node.type) {
                     const type = node.type.visit(this, context)
                     if (questionToken) {
@@ -578,6 +570,14 @@ export class TsGraphqlVisitor implements ast.Visitor {
                     const sourceFile = node.__node.getSourceFile();
                     const filename = sourceFile.fileName;
                     console.error(`missing type definition! \n${filename}:${ts.getLineAndCharacterOfPosition(sourceFile, node.__node.end).line}\n${node.__node.getText()}\n\n`)
+                }
+                if (node.parameters) {
+                    const old = !!context.isInput;
+                    context.isInput = true;
+                    ast.arguments = node.parameters.map(it => {
+                        return it.visit(this, context)
+                    }).filter(it => !!it);
+                    context.isInput = old;
                 }
                 if (node.jsDoc) {
                     const jsDoc = node.jsDoc.map(it => it.visit(this, context)).flat();
@@ -666,17 +666,31 @@ export class TsGraphqlVisitor implements ast.Visitor {
     }
     visitParameterDeclaration(node: ast.ParameterDeclaration, context?: any) {
         let { dotDotDotToken, name, questionToken, type, initializer } = node.toJson(this, context);
-        const input = new graphql.InputValueDefinitionNode();
-        input.name = name;
-        if (questionToken) {
-            input.type = type;
-        } else {
-            input.type = new graphql.NonNullTypeNode(type)
+        const decorators = this.visits(node.decorators, context);
+        if (decorators && decorators.length > 0) {
+            const hasArgs: graphql.DirectiveNode = decorators.find((it: graphql.DirectiveNode) => it.name.value === 'Args')
+            if (hasArgs) {
+
+                const input = new graphql.InputValueDefinitionNode();
+                input.name = name;
+                if (hasArgs.arguments && hasArgs.arguments.length > 0) {
+                    const astNode = hasArgs.arguments[0]
+                    if (astNode instanceof graphql.StringValueNode) {
+                        const argName: string = astNode.value;
+                        input.name = new graphql.NameNode(argName)
+                    }
+                }
+                if (questionToken) {
+                    input.type = type;
+                } else {
+                    input.type = new graphql.NonNullTypeNode(type)
+                }
+                if (dotDotDotToken) {
+                    debugger;
+                }
+                return input;
+            }
         }
-        if (dotDotDotToken) {
-            debugger;
-        }
-        return input;
     }
     visitBindingElement(node: ast.BindingElement, context?: any) {
 
@@ -998,7 +1012,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
 
     }
     visitMethodSignature(node: ast.MethodSignature, context?: any) {
-
+        const ast = node.toJson(this, context)
     }
     visitConstructSignatureDeclaration(node: ast.ConstructSignatureDeclaration, context?: any) {
 
@@ -1715,6 +1729,37 @@ export class TsGraphqlVisitor implements ast.Visitor {
                     }
                 } else {
                     const ast = context.create(valueDeclaration.type);
+                    const decorators = (valueDeclaration.decorators || []).map((it: any) => context.create(it))
+                    const isPrimary = decorators.some((it: ast.Decorator) => {
+                        const { expression } = it;
+                        if (expression instanceof astTs.CallExpression) {
+                            const { expression: exp, arguments: args } = expression;
+                            if (exp instanceof astTs.Identifier) {
+                                const { escapedText } = exp;
+                                if (['PrimaryGeneratedColumn', 'ObjectIdColumn', 'PrimaryColumn'].includes(escapedText)) return true;
+                            }
+                            return (args || []).some(it => {
+                                if (it instanceof astTs.ObjectLiteralExpression) {
+                                    const { properties } = it;
+                                    return !!properties.find(it => {
+                                        if (it instanceof astTs.PropertyAssignment) {
+                                            if (it.name instanceof astTs.Identifier) {
+                                                if (it.name.escapedText === 'unique') {
+                                                    if (it.initializer instanceof BooleanLiteral) {
+                                                        if (it.initializer.isTrue()) {
+                                                            return true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        return false;
+                                    })
+                                }
+                            })
+                        }
+                        return false;
+                    })
                     if (ast) {
                         const type = ast.visit(this, context)
                         if (type instanceof graphql.NameNode) {
@@ -1739,6 +1784,18 @@ export class TsGraphqlVisitor implements ast.Visitor {
                                 new graphql.NameNode('Object')
                             )
                         }
+                    }
+                    if (isPrimary) {
+                        const primary = new graphql.DirectiveNode()
+                        primary.name = new graphql.NameNode('key')
+                        const args = new graphql.ArgumentNode();
+                        args.name = new graphql.NameNode('fields')
+                        args.value = new graphql.StringValueNode(field.name.value)
+                        primary.arguments = [
+                            args
+                        ];
+                        input.directives = input.directives || [];
+                        input.directives.push(primary)
                     }
                 }
             }

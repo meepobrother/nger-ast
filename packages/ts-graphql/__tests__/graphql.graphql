@@ -1,9 +1,27 @@
-input UserAndUser2PickOrder {
-  username: String
-  uid: String
-  title: String
+type User @key(fields: "username") @key(fields: "code") {
+  username: String!
+  id: String!
+  code: String!
+  group: UserGroup!
+}
+
+type UserGroup @key(fields: "code") {
+  code: String!
+  title: String!
+}
+
+input UserInput {
+  username: String!
+  id: String!
+  code: String!
+  group: UserGroupInput!
+}
+
+input UserGroupInput {
+  code: String!
+  title: String!
 }
 
 type Query {
-  getUser(order: UserAndUser2PickOrder): Any
+  getUser(order1: UserInput): User!
 }

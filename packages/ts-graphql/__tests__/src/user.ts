@@ -1,9 +1,23 @@
-export interface User {
-    getName(name: string): string;
+import { PrimaryColumn, Column, ManyToOne } from '@nger/typeorm'
+export class User {
+    @PrimaryColumn()
+    username: string;
+
+    @Column()
+    id: string;
+
+    @Column({
+        unique: true
+    })
+    code: string;
+
+    @ManyToOne(() => UserGroup)
+    group: UserGroup;
 }
 
-export interface User2 {
-    title: {
-        demo: () => string;
-    }
+export class UserGroup { 
+    @PrimaryColumn()
+    code: string;
+
+    title: string;
 }

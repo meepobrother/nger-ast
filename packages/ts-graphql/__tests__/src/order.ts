@@ -1,6 +1,6 @@
 import { Order } from '@nger/ast.core'
 import { Controller } from '@nger/core';
-import { Query } from '@nger/graphql'
+import { Query, Args } from '@nger/graphql'
 import { User, User2 } from './user'
 interface OrderDemo {
     title: string;
@@ -9,7 +9,7 @@ interface OrderDemo {
 @Controller()
 export class OrderController {
     @Query()
-    async getUser(order?: Order<Pick<User & User2, 'username' | 'uid' | 'title'>>) {
+    async getUser(@Args('order1') order?: User): Promise<User> {
         return [true]
     }
 }
