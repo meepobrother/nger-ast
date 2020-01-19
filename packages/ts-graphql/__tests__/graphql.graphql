@@ -4,30 +4,13 @@ scalar _Any
 
 scalar _FieldSet
 
-type User @key(fields: "username") @key(fields: "code") {
-  username: String!
+type UserCodeId {
+  code: String!
   id: String!
-  code: String!
-  group: UserGroup!
-}
-
-type UserGroup @key(fields: "code") {
-  code: String!
-  title: String!
-}
-
-input UserInput {
-  username: String!
-  id: String!
-  code: String!
-  group: UserGroupInput!
-}
-
-input UserGroupInput {
-  code: String!
-  title: String!
 }
 
 type Query {
-  getUser(order1: UserInput): User!
+  getUser: [UserCodeId]!
+  getUser2: [UserCodeId]!
+  getUser3: [UserCodeId]!
 }

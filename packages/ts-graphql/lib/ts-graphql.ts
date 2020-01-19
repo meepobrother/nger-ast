@@ -5,7 +5,7 @@ import { CompilerContext } from './compiler';
 import { join, dirname, extname } from 'path';
 import * as ts from 'typescript';
 import { existsSync } from 'fs';
-import { DecoratorVisitor } from './interfaces/decorator';
+import { DecoratorVisitor } from './handlers/decorator';
 import { createNameNode, getTypeName } from './handlers/util';
 import { MethodSignature, BooleanLiteral } from '@nger/ast.tsc';
 import { NamingStrage } from './naming-strage';
@@ -1405,7 +1405,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         if (context.isInput) return this.typeToGraphqlInput(node, context)
         return this.typeToGraphqlType(node, context)
     }
-    typeToGraphqlInput(node: ts.Type, context: CompilerContext): graphql.NameNode | graphql.ListTypeNode {
+    typeToGraphqlInput(node: ts.Type, context: CompilerContext, name?: string): graphql.NameNode | graphql.ListTypeNode {
         switch (node.flags) {
             case ts.TypeFlags.Any:
                 return new graphql.NameNode(`Any`)
@@ -1508,7 +1508,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
         let typeToString = this.namingStrage.create(context.typeChecker.typeToString(
             node
-        ), context);
+        ), context, name);
         const statement = context.getStatement(typeToString)
         if (statement) {
             if (statement instanceof graphql.ScalarTypeDefinitionNode) {
@@ -1523,9 +1523,19 @@ export class TsGraphqlVisitor implements ast.Visitor {
             if (typeToString === 'any') {
                 return new graphql.NameNode('Any')
             }
-            const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
-            if (!isInput) {
+            if (statement instanceof graphql.ObjectTypeDefinitionNode) {
                 typeToString += 'Input'
+            }
+            if (statement instanceof graphql.InputObjectTypeDefinitionNode) {
+                if ((properties || []).map(it => it.getName()).sort().join() !== (statement.fields || []).map(it => it.name.value).sort().join()) {
+                    const decorations = node.symbol.getDeclarations()
+                    if (decorations && decorations.length) {
+                        const decoration = decorations[0]
+                        const sourceFile = decoration.getSourceFile();
+                        const filename = sourceFile.fileName;
+                        console.error(`${typeToString} has exist! \n${filename}:${ts.getLineAndCharacterOfPosition(sourceFile, decoration.end).line}\n${decoration.getText()}\n\n`)
+                    }
+                }
             }
         }
         input.name = new graphql.NameNode(typeToString)
@@ -1600,7 +1610,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         const [frist, ...others] = name.split('')
         return [frist.toUpperCase(), ...others].join('')
     }
-    typeToGraphqlType(node: ts.Type, context: CompilerContext): graphql.NameNode | graphql.ListTypeNode {
+    typeToGraphqlType(node: ts.Type, context: CompilerContext, dirname?: string): graphql.NameNode | graphql.ListTypeNode {
         switch (node.flags) {
             case ts.TypeFlags.Any:
                 return new graphql.NameNode(`Any`)
@@ -1697,7 +1707,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
         let typeToString = this.namingStrage.create(context.typeChecker.typeToString(
             node
-        ), context);
+        ), context, dirname);
         const statement = context.getStatement(typeToString)
         if (statement) {
             if (statement instanceof graphql.ScalarTypeDefinitionNode) {
@@ -1712,9 +1722,19 @@ export class TsGraphqlVisitor implements ast.Visitor {
             if (typeToString === 'any') {
                 return new graphql.NameNode('Any')
             }
-            const isInput = statement instanceof graphql.InputObjectTypeDefinitionNode
-            if (isInput) {
+            if (statement instanceof graphql.InputObjectTypeDefinitionNode) {
                 typeToString += 'Type'
+            }
+            if (statement instanceof graphql.ObjectTypeDefinitionNode) {
+                if ((properties || []).map(it => it.getName()).sort().join() !== (statement.fields || []).map(it => it.name.value).sort().join()) {
+                    const decorations = node.symbol.getDeclarations()
+                    if (decorations && decorations.length) {
+                        const decoration = decorations[0];
+                        const sourceFile = decoration.getSourceFile();
+                        const filename = sourceFile.fileName;
+                        console.error(`${typeToString} has exist! \n${filename}:${ts.getLineAndCharacterOfPosition(sourceFile, decoration.end).line}\n${decoration.getText()}\n\n`)
+                    }
+                }
             }
         }
         input.name = new graphql.NameNode(typeToString)
@@ -1722,12 +1742,12 @@ export class TsGraphqlVisitor implements ast.Visitor {
             return input.name
         }
         context.setStatements(input)
-        properties.map(it => {
+        properties && properties.map(it => {
             const field = new graphql.FieldDefinitionNode();
             field.name = new graphql.NameNode(it.getName())
             const type = Reflect.get(it, 'type')
             const valueDeclaration = Reflect.get(it, 'valueDeclaration')
-            const questionToken = valueDeclaration.questionToken;
+            let questionToken = valueDeclaration && valueDeclaration.questionToken;
             if (type) {
                 const gt = this.typeToGraphqlType(type, context)
                 if (gt instanceof graphql.ObjectTypeDefinitionNode) {
@@ -1736,6 +1756,11 @@ export class TsGraphqlVisitor implements ast.Visitor {
                     field.type = gt;
                 } else {
                     field.type = new graphql.NamedTypeNode(gt)
+                }
+                const types = type.types;
+                if (types && types.length > 0) {
+                    const hasUndefined = types.some((it: any) => it.intrinsicName === 'undefined')
+                    if (hasUndefined) questionToken = hasUndefined;
                 }
             } else {
                 const ast = context.create(valueDeclaration);
@@ -1803,7 +1828,6 @@ export class TsGraphqlVisitor implements ast.Visitor {
                                 graphqlT.name
                             )
                         } else {
-                            debugger;
                             field.type = new graphql.NamedTypeNode(
                                 new graphql.NameNode('Object')
                             )
@@ -1860,7 +1884,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
         }
         const type = context.typeChecker.getTypeFromTypeNode(node.__node)
         if (context.isInput) {
-            const input = this.typeToGraphqlInput(type, context)
+            const input = this.typeToGraphqlInput(type, context, typeName.value)
             if (input) {
                 if (input instanceof graphql.ListTypeNode) {
                     return input
@@ -1869,7 +1893,7 @@ export class TsGraphqlVisitor implements ast.Visitor {
                 }
             }
         } else {
-            const input = this.typeToGraphqlType(type, context)
+            const input = this.typeToGraphqlType(type, context, typeName.value)
             if (input) {
                 if (input instanceof graphql.ObjectTypeDefinitionNode) {
                     return new graphql.NamedTypeNode(input.name)

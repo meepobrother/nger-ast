@@ -11,8 +11,7 @@ export class NamingStrage {
             return name.split(',')[0];
         }
     }
-    create(name: string | undefined, context: CompilerContext, dirname?: string): string {
-        if (dirname) return dirname;
+    create(name: string | undefined, context: CompilerContext): string {
         let targetName: string = name || ``
         const reg = /(.*?)\<(.*)\>/;
         const exec = reg.exec(targetName);
@@ -28,9 +27,9 @@ export class NamingStrage {
                     const [all, order, user] = exec;
                     switch (order) {
                         case 'Promise':
-                            return `${this.create(user, context, dirname)}`
+                            return `${this.create(user, context)}`
                         default:
-                            return `${this.create(user, context, dirname)}${order}`
+                            return `${this.create(user, context)}${order}`
                     }
                 default:
                     break;

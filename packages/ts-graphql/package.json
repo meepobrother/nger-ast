@@ -1,6 +1,6 @@
 {
     "name": "@nger/ast.ts-graphql",
-    "version": "1.2.35",
+    "version": "1.2.44",
     "description": "> TODO: description",
     "author": "imeepos <1037483576@qq.com>",
     "homepage": "https://github.com/meepobrother/nger-ast#readme",
@@ -15,7 +15,6 @@
         "lib"
     ],
     "publishConfig": {
-        "registry": "http://registry.npmjs.org",
         "access": "public"
     },
     "repository": {

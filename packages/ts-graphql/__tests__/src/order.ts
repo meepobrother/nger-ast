@@ -1,15 +1,21 @@
-import { Order } from '@nger/ast.core'
 import { Controller } from '@nger/core';
-import { Query, Args } from '@nger/graphql'
-import { User, User2 } from './user'
-interface OrderDemo {
-    title: string;
-    demo: OrderDemo;
-}
+import { Query } from '@nger/graphql'
+import { User } from './user'
+export type UserCodeId = Pick<User, 'code' | 'id'>;
 @Controller()
 export class OrderController {
     @Query()
-    async getUser(@Args('order1') order?: User): Promise<User> {
-        return [true]
+    async getUser(): Promise<UserCodeId[]> {
+        return []
+    }
+
+    @Query()
+    async getUser2(): Promise<UserCodeId[]> {
+        return []
+    }
+
+    @Query()
+    async getUser3(): Promise<UserCodeId[]> {
+        return []
     }
 }

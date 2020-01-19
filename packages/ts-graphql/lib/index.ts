@@ -30,7 +30,6 @@ export function tsGraphqlAst(src: string, tsconfig?: string): DocumentNode | und
         const upload = new ScalarTypeDefinitionNode()
         upload.name = new NameNode(`Upload`);
         compilerContext.setStatements(upload);
-
         const _any = new ScalarTypeDefinitionNode()
         _any.name = new NameNode(`_Any`);
         compilerContext.setStatements(_any);
